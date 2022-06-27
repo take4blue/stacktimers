@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_picker/flutter_picker.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -12,7 +12,6 @@ import 'package:stacktimers/view/timercontrolpage.dart';
 import 'package:stacktimers/view/timereditpage.dart';
 import 'package:stacktimers/vm/timercontrolvm.dart';
 import 'package:stacktimers/vm/timereditvm.dart';
-import 'package:flutter_picker/flutter_picker.dart';
 
 /// 展開させるためのビューを管理するためのクラス。
 ///
@@ -140,24 +139,6 @@ class ViewControl {
         });
     await picker.showModal(Get.context!);
     return Future.value(changed * 100);
-  }
-
-  /// Cupertinoなモーダルダイアログの表示用共通関数
-  Future<void> _showDialog(Widget child) {
-    return showCupertinoModalPopup<void>(
-        context: Get.context!,
-        builder: (BuildContext context) => Container(
-              height: 216,
-              padding: const EdgeInsets.only(top: 6.0),
-              margin: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              color: CupertinoColors.systemBackground.resolveFrom(context),
-              child: SafeArea(
-                top: false,
-                child: child,
-              ),
-            ));
   }
 
   Timer? _timerInterrupt;
