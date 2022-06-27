@@ -26,31 +26,75 @@ class TimerOutPainter extends CustomPainter {
     final innterRect =
         Rect.fromCircle(center: center, radius: base * (0.5 - offset - width));
 
-    double angle = (pi * 2) / vm.totalTime;
+    if (vm.times.length > 1) {
+      double angle = (pi * 2) / vm.totalTime;
 
-    /// 開始角度
-    double start = 0.0;
-    for (final time in vm.times) {
-      final delta = time.iTime * angle;
+      /// 開始角度
+      double start = 0.0;
+      for (final time in vm.times) {
+        final delta = time.iTime * angle;
 
-      final path = Path();
-      path.addArc(outerRect, (start + delta / 2) - (pi / 2), (delta / 2));
-      path.arcTo(innterRect, (start + delta) - (pi / 2), -delta, false);
-      path.arcTo(outerRect, (start) - (pi / 2), (delta / 2), false);
-      path.close();
-      canvas.drawPath(
-          path,
+        final path = Path();
+        path.addArc(outerRect, (start + delta / 2) - (pi / 2), (delta / 2));
+        path.arcTo(innterRect, (start + delta) - (pi / 2), -delta, false);
+        path.arcTo(outerRect, (start) - (pi / 2), (delta / 2), false);
+        path.close();
+        canvas.drawPath(
+            path,
+            Paint()
+              ..color = time.iColor
+              ..style = PaintingStyle.fill);
+        canvas.drawPath(
+            path,
+            Paint()
+              ..color = Colors.black
+              ..strokeWidth = strokeWidth
+              ..style = PaintingStyle.stroke);
+
+        start += delta;
+      }
+    } else if (vm.times.length == 1) {
+      canvas.drawArc(
+          outerRect,
+          0,
+          pi * 2,
+          false,
           Paint()
-            ..color = time.iColor
+            ..color = vm.times[0].iColor
             ..style = PaintingStyle.fill);
-      canvas.drawPath(
-          path,
+      canvas.drawArc(
+          outerRect,
+          0,
+          pi * 2,
+          false,
           Paint()
             ..color = Colors.black
             ..strokeWidth = strokeWidth
             ..style = PaintingStyle.stroke);
-
-      start += delta;
+      canvas.drawLine(
+          Offset(center.dx, base * offset),
+          Offset(center.dx, base * (offset + width)),
+          Paint()
+            ..color = Colors.black
+            ..strokeWidth = strokeWidth
+            ..style = PaintingStyle.stroke);
+      canvas.drawArc(
+          innterRect,
+          0,
+          pi * 2,
+          false,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.fill);
+      canvas.drawArc(
+          innterRect,
+          0,
+          pi * 2,
+          false,
+          Paint()
+            ..color = Colors.black
+            ..strokeWidth = strokeWidth
+            ..style = PaintingStyle.stroke);
     }
   }
 
