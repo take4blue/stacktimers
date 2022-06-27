@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:gui_box/gui_box.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/model/titletable.dart';
@@ -18,7 +17,7 @@ class TitleList extends TitleTable {
     for (final item in table) {
       sum += item.iTime;
     }
-    return TimeSelector.formatter(sum);
+    return TimeTable.formatter(sum);
   }
 
   static const defaultTime = "--:--";

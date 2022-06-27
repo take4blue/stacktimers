@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:gui_box/gui_box.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/model/titletable.dart';
@@ -15,7 +14,7 @@ class EditItem {
   final TimeTable timer;
 
   /// 時間を文字列化したもの
-  String get time => TimeSelector.formatter(timer.iTime);
+  String get time => TimeTable.formatter(timer.iTime);
 }
 
 class TimerEditVM extends IDbLoader with Loader {
@@ -110,7 +109,7 @@ class TimerEditVM extends IDbLoader with Loader {
       sum += time.timer.iTime;
     }
 
-    return "Total : ${TimeSelector.formatter(sum)}";
+    return "Total : ${TimeTable.formatter(sum)}";
   }
 
   @override

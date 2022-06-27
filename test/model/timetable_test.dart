@@ -136,4 +136,11 @@ void main() {
     expect(result.iDuration, 3);
     expect(result.iColor, Colors.white);
   });
+  test("formatter", () {
+    expect(TimeTable.formatter(0), "00:00");
+    expect(TimeTable.formatter(754), "12:34");
+    expect(TimeTable.formatter(-1), "00:00");
+    expect(TimeTable.formatter(5999), "99:59");
+    expect(TimeTable.formatter(6000), "99:59");
+  });
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:gui_box/gui_box.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
@@ -89,8 +88,8 @@ void main() {
       sum += 12 * (i + 1);
     }
     expect(top.totalTime, sum);
-    expect(top.totalRemain, TimeSelector.formatter(sum));
-    expect(top.lapRemain, TimeSelector.formatter(top.times[0].endTime));
+    expect(top.totalRemain, TimeTable.formatter(sum));
+    expect(top.lapRemain, TimeTable.formatter(top.times[0].endTime));
     expect(await top.closePage(), true);
   });
 

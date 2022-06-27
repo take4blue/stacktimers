@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:gui_box/gui_box.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/view/viewcontrol.dart';
@@ -90,8 +89,8 @@ class TimerControlVM extends IDbLoader with Loader {
   /// 現在時刻更新
   set currentTime(int value) {
     _currentTime = value;
-    lapRemain = TimeSelector.formatter(times[_index].endTime - _currentTime);
-    totalRemain = TimeSelector.formatter(totalTime - _currentTime);
+    lapRemain = TimeTable.formatter(times[_index].endTime - _currentTime);
+    totalRemain = TimeTable.formatter(totalTime - _currentTime);
     update(["time"]);
     update();
   }
@@ -119,7 +118,7 @@ class TimerControlVM extends IDbLoader with Loader {
           return;
         case WithinType.last:
           // 音を鳴らす
-          lapRemain = TimeSelector.formatter(0);
+          lapRemain = TimeTable.formatter(0);
           ViewControl.a.playNotification(true, times[i].iDuration);
           times[i].doBeep = true;
           return;

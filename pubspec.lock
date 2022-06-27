@@ -90,6 +90,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.4"
+  flutter_picker:
+    dependency: "direct main"
+    description:
+      name: flutter_picker
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.3"
   flutter_ringtone_player:
     dependency: "direct main"
     description:
@@ -117,19 +124,12 @@ packages:
     source: hosted
     version: "4.6.5"
   golden_toolkit:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: golden_toolkit
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.13.0"
-  gui_box:
-    dependency: "direct main"
-    description:
-      path: "../library/gui_box"
-      relative: true
-    source: path
-    version: "0.0.2"
   intl:
     dependency: "direct main"
     description:

@@ -7,12 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:get/get.dart';
-import 'package:gui_box/gui_box.dart';
 import 'package:intl/intl.dart';
 import 'package:stacktimers/view/timercontrolpage.dart';
 import 'package:stacktimers/view/timereditpage.dart';
 import 'package:stacktimers/vm/timercontrolvm.dart';
 import 'package:stacktimers/vm/timereditvm.dart';
+import 'package:flutter_picker/flutter_picker.dart';
 
 /// 展開させるためのビューを管理するためのクラス。
 ///
@@ -67,14 +67,56 @@ class ViewControl {
 
   /// 時間設定ダイアログの表示
   ///
-  /// [initial]は初期値
+  /// (99:59)という設定が可能なもので、[initial]は初期値でreturnで変更値が返る。
   Future<int> getTime(int initial) async {
-    int changed = initial;
-    await _showDialog(TimeSelector(
-      initial,
-      (time) => changed = time,
-    ));
-    return Future.value(changed);
+    var values = <int>[
+      initial.clamp(0, 5999) ~/ 600 % 10,
+      initial.clamp(0, 5999) ~/ 60 % 10,
+      initial.clamp(0, 5999) ~/ 10 % 6,
+      initial.clamp(0, 5999) % 10
+    ];
+    final picker = Picker(
+        adapter: NumberPickerAdapter(data: [
+          NumberPickerColumn(
+            initValue: values[0],
+            begin: 0,
+            end: 9,
+          ),
+          NumberPickerColumn(
+            initValue: values[1],
+            begin: 0,
+            end: 9,
+          ),
+          NumberPickerColumn(
+            initValue: values[2],
+            begin: 0,
+            end: 5,
+          ),
+          NumberPickerColumn(
+            initValue: values[3],
+            begin: 0,
+            end: 9,
+          ),
+        ]),
+        delimiter: [
+          PickerDelimiter(
+              column: 2,
+              child: Container(
+                width: 16.0,
+                alignment: Alignment.center,
+                child: const Text(':',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                color: Colors.white,
+              ))
+        ],
+        onConfirm: (Picker picker, List value) {
+          for (int i = 0; i < picker.getSelectedValues().length; i++) {
+            values[i] = picker.getSelectedValues()[i];
+          }
+        });
+    await picker.showModal(Get.context!);
+    return Future.value(
+        values[0] * 600 + values[1] * 60 + values[2] * 10 + values[3]);
   }
 
   /// 発生時間設定ダイアログの表示
@@ -84,13 +126,19 @@ class ViewControl {
   Future<int> getDuration(int initial) async {
     final f = NumberFormat("0.0");
     int changed = initial ~/ 100;
-    await _showDialog(NumberSelector(
-      1,
-      99,
-      initValue: changed,
-      onValueItemChanged: (time) => changed = time,
-      formatter: (value) => f.format(value / 10),
-    ));
+    final picker = Picker(
+        adapter: NumberPickerAdapter(data: [
+          NumberPickerColumn(
+            initValue: changed,
+            begin: 1,
+            end: 99,
+            onFormatValue: (value) => f.format(value / 10),
+          ),
+        ]),
+        onConfirm: (Picker picker, List value) {
+          changed = picker.getSelectedValues()[0];
+        });
+    await picker.showModal(Get.context!);
     return Future.value(changed * 100);
   }
 

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:gui_box/gui_box.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
@@ -48,6 +47,6 @@ void main() {
       expect(top.times[i].timer.iTime, 10 * (i + 1) + (i + 1));
       sum += top.times[i].timer.iTime;
     }
-    expect(top.total, "Total : ${TimeSelector.formatter(sum)}");
+    expect(top.total, "Total : ${TimeTable.formatter(sum)}");
   });
 }

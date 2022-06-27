@@ -103,4 +103,13 @@ class TimeTable {
   static Color _defaultColor(int iNo) {
     return _defaultColors[iNo % _defaultColors.length];
   }
+
+  /// 99:59という時間表記の情報を作成する。
+  static String formatter(int value) {
+    final time = value.clamp(0, 5999);
+    return "${time ~/ 600 % 10}"
+        "${time ~/ 60 % 10}:"
+        "${time ~/ 10 % 6}"
+        "${time % 10}";
+  }
 }
