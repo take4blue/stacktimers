@@ -38,6 +38,7 @@ class _TT1 extends TitleList {
 
   @override
   Future<String> time() {
+    totalTime = id;
     return Future.value("$id:$id");
   }
 }

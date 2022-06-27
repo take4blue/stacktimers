@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
@@ -42,7 +43,9 @@ void main() {
     final target = TitleList(title);
     expect(target.id, title.id);
     expect(target.sTitle, title.sTitle);
+    expect(target.totalTime, 0);
     expect(await target.time(), "06:36");
+    expect(target.totalTime, 396);
   });
 
   test("loader", () async {

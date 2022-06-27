@@ -10,14 +10,16 @@ class TitleList extends TitleTable {
   /// コンストラクタ
   TitleList(TitleTable title) : super(id: title.id, sTitle: title.sTitle);
 
+  int totalTime = 0;
+
   /// 合計時間
   Future<String> time() async {
     final table = await DbAccess.a.getTimes(id);
-    int sum = 0;
+    totalTime = 0;
     for (final item in table) {
-      sum += item.iTime;
+      totalTime += item.iTime;
     }
-    return TimeTable.formatter(sum);
+    return TimeTable.formatter(totalTime);
   }
 
   static const defaultTime = "--:--";

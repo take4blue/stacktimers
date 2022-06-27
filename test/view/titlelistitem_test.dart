@@ -33,6 +33,16 @@ class _TT1 extends TitleList {
 
   @override
   Future<String> time() {
+    totalTime = id + 1;
+    return Future.value("$id:$id");
+  }
+}
+
+class _TT3 extends TitleList {
+  _TT3(TitleTable table) : super(table);
+
+  @override
+  Future<String> time() {
     return Future.value("$id:$id");
   }
 }
@@ -42,6 +52,7 @@ class _TT2 extends TitleList {
 
   @override
   Future<String> time() {
+    totalTime = id + 1;
     return Future.error("$id:$id");
   }
 }
@@ -51,7 +62,7 @@ void main() {
     Get.addTranslations(Messages().keys);
   });
   tearDown(Get.reset);
-  testGoldens('initial', (WidgetTester tester) async {
+  testGoldens('initial1', (WidgetTester tester) async {
     final top = TopVM();
     Get.put<TopVM>(top);
     for (int i = 1; i < 3; i++) {
@@ -80,6 +91,20 @@ void main() {
     top.update(["0"]);
     await tester.pumpAndSettle();
     await screenMatchesGolden(tester, 'TitleListItem_2');
+  });
+  testGoldens('initial2', (WidgetTester tester) async {
+    // totalTimeが0の場合タイマー実行画面へのジャンプを抑制する
+    final top = TopVM();
+    Get.put<TopVM>(top);
+    for (int i = 1; i < 3; i++) {
+      top.titles.add(_TT3(TitleTable(id: i, sTitle: "Title $i")));
+    }
+    final testWidget = GetMaterialApp(
+        locale: const Locale('en', 'US'),
+        theme: ThemeData(fontFamily: "IPAGothic"),
+        home: const Material(child: TitleListItem(0)));
+    await tester.pumpWidgetBuilder(testWidget);
+    await screenMatchesGolden(tester, 'TitleListItem_3');
   });
   testGoldens('error', (WidgetTester tester) async {
     final top = TopVM();
@@ -131,7 +156,7 @@ void main() {
     await screenMatchesGolden(tester, 'TitleListItem_drag2');
   });
 
-  testWidgets('start', (WidgetTester tester) async {
+  testWidgets('start1', (WidgetTester tester) async {
     final top = _Test1();
     Get.put<TopVM>(top);
     for (int i = 1; i <= 3; i++) {
@@ -145,6 +170,22 @@ void main() {
     await tester.tap(find.byIcon(Icons.start));
     await tester.pumpAndSettle();
     expect(top.func, "startTime 2");
+  });
+
+  testWidgets('start2', (WidgetTester tester) async {
+    final top = _Test1();
+    Get.put<TopVM>(top);
+    for (int i = 1; i <= 3; i++) {
+      top.titles.add(_TT3(TitleTable(id: i, sTitle: "Title $i")));
+    }
+    final testWidget = GetMaterialApp(
+        locale: const Locale('en', 'US'),
+        theme: ThemeData(fontFamily: "IPAGothic"),
+        home: const Material(child: TitleListItem(2)));
+    await tester.pumpWidgetBuilder(testWidget);
+    await tester.tap(find.byIcon(Icons.start));
+    await tester.pumpAndSettle();
+    expect(top.func.isEmpty, true);
   });
 
   testWidgets('edit', (WidgetTester tester) async {

@@ -67,39 +67,40 @@ class TitleListItem extends StatelessWidget {
       id: "$index",
       builder: (vm) {
         return Slidable(
-          key: ValueKey(index),
-          endActionPane: ActionPane(
-              dismissible: DismissiblePane(onDismissed: () {}),
-              motion: const ScrollMotion(),
-              children: [
-                SlidableAction(
-                    icon: Icons.delete,
-                    onPressed: (context) => vm.deleteTitle(index))
-              ]),
-          child: ListTile(
-            leading: IconButton(
-              onPressed: () => vm.startTimer(index),
-              icon: const Icon(Icons.start),
-            ),
-            trailing: IconButton(
-              onPressed: () => vm.editTimer(index),
-              icon: const Icon(Icons.edit),
-            ),
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(vm.titles[index].sTitle),
-                const SizedBox(
-                  width: 10,
+            key: ValueKey(index),
+            endActionPane: ActionPane(
+                dismissible: DismissiblePane(onDismissed: () {}),
+                motion: const ScrollMotion(),
+                children: [
+                  SlidableAction(
+                      icon: Icons.delete,
+                      onPressed: (context) => vm.deleteTitle(index))
+                ]),
+            child: FutureBuilder<String>(
+              future: vm.titles[index].time(),
+              builder: (context, snap) => ListTile(
+                leading: IconButton(
+                  onPressed: vm.titles[index].totalTime == 0
+                      ? null
+                      : () => vm.startTimer(index),
+                  icon: const Icon(Icons.start),
                 ),
-                FutureBuilder<String>(
-                    future: vm.titles[index].time(),
-                    builder: (context, snap) => Text(
-                        snap.hasData ? snap.data! : TitleList.defaultTime)),
-              ],
-            ),
-          ),
-        );
+                trailing: IconButton(
+                  onPressed: () => vm.editTimer(index),
+                  icon: const Icon(Icons.edit),
+                ),
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(vm.titles[index].sTitle),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Text(snap.hasData ? snap.data! : TitleList.defaultTime),
+                  ],
+                ),
+              ),
+            ));
       },
     );
   }
