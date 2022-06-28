@@ -17,6 +17,13 @@ class TimerOutPainter extends CustomPainter {
 
   final vm = Get.find<TimerControlVM>();
 
+  /// 塗り潰しのPaint
+  static Paint fillPainter(ControlItem time) {
+    return Paint()
+      ..color = time.iColor
+      ..style = PaintingStyle.fill;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset((size / 2).width, (size / 2).height);
@@ -25,6 +32,11 @@ class TimerOutPainter extends CustomPainter {
         Rect.fromCircle(center: center, radius: base * (0.5 - offset));
     final innterRect =
         Rect.fromCircle(center: center, radius: base * (0.5 - offset - width));
+
+    final strokePainter = Paint()
+      ..color = Colors.black
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
 
     if (vm.times.length > 1) {
       double angle = (pi * 2) / vm.totalTime;
@@ -39,45 +51,16 @@ class TimerOutPainter extends CustomPainter {
         path.arcTo(innterRect, (start + delta) - (pi / 2), -delta, false);
         path.arcTo(outerRect, (start) - (pi / 2), (delta / 2), false);
         path.close();
-        canvas.drawPath(
-            path,
-            Paint()
-              ..color = time.iColor
-              ..style = PaintingStyle.fill);
-        canvas.drawPath(
-            path,
-            Paint()
-              ..color = Colors.black
-              ..strokeWidth = strokeWidth
-              ..style = PaintingStyle.stroke);
+        canvas.drawPath(path, fillPainter(time));
+        canvas.drawPath(path, strokePainter);
 
         start += delta;
       }
     } else if (vm.times.length == 1) {
-      canvas.drawArc(
-          outerRect,
-          0,
-          pi * 2,
-          false,
-          Paint()
-            ..color = vm.times[0].iColor
-            ..style = PaintingStyle.fill);
-      canvas.drawArc(
-          outerRect,
-          0,
-          pi * 2,
-          false,
-          Paint()
-            ..color = Colors.black
-            ..strokeWidth = strokeWidth
-            ..style = PaintingStyle.stroke);
-      canvas.drawLine(
-          Offset(center.dx, base * offset),
-          Offset(center.dx, base * (offset + width)),
-          Paint()
-            ..color = Colors.black
-            ..strokeWidth = strokeWidth
-            ..style = PaintingStyle.stroke);
+      canvas.drawArc(outerRect, 0, pi * 2, false, fillPainter(vm.times[0]));
+      canvas.drawArc(outerRect, 0, pi * 2, false, strokePainter);
+      canvas.drawLine(Offset(center.dx, base * offset),
+          Offset(center.dx, base * (offset + width)), strokePainter);
       canvas.drawArc(
           innterRect,
           0,
@@ -86,15 +69,7 @@ class TimerOutPainter extends CustomPainter {
           Paint()
             ..color = Colors.white
             ..style = PaintingStyle.fill);
-      canvas.drawArc(
-          innterRect,
-          0,
-          pi * 2,
-          false,
-          Paint()
-            ..color = Colors.black
-            ..strokeWidth = strokeWidth
-            ..style = PaintingStyle.stroke);
+      canvas.drawArc(innterRect, 0, pi * 2, false, strokePainter);
     }
   }
 
@@ -129,37 +104,40 @@ class TimerInPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: base * (0.5 - radius));
 
     double angle = (pi * 2) / vm.totalTime;
+    final strokePainter = Paint()
+      ..color = Colors.black
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
 
     /// 開始角度
     double start = 0.0;
     int remainTime = min(prevTime, vm.totalTime);
-    for (final time in vm.times) {
-      final delta = min(time.iTime, remainTime) * angle;
+    if (vm.times.length > 1 || vm.currentTime != vm.totalTime) {
+      for (final time in vm.times) {
+        final delta = min(time.iTime, remainTime) * angle;
 
-      // 扇形を描画する。
-      final path = Path();
-      path.moveTo(center.dx, center.dy);
-      path.arcTo(rect, start - (pi / 2), delta, false);
-      path.lineTo(center.dx, center.dy);
-      path.close();
-      canvas.drawPath(
-          path,
-          Paint()
-            ..color = time.iColor
-            ..style = PaintingStyle.fill);
-      canvas.drawPath(
-          path,
-          Paint()
-            ..color = Colors.black
-            ..strokeWidth = strokeWidth
-            ..style = PaintingStyle.stroke);
+        // 扇形を描画する。
+        final path = Path();
+        path.moveTo(center.dx, center.dy);
+        path.arcTo(rect, start - (pi / 2), delta, false);
+        path.lineTo(center.dx, center.dy);
+        path.close();
+        canvas.drawPath(path, TimerOutPainter.fillPainter(time));
+        canvas.drawPath(path, strokePainter);
 
-      start += delta;
-      remainTime -= time.iTime;
-      if (remainTime <= 0) {
-        // 残り時間が無くなったらこれ以上描画しない
-        break;
+        start += delta;
+        remainTime -= time.iTime;
+        if (remainTime <= 0) {
+          // 残り時間が無くなったらこれ以上描画しない
+          break;
+        }
       }
+    } else if (vm.times.length == 1) {
+      canvas.drawArc(
+          rect, 0, 2 * pi, false, TimerOutPainter.fillPainter(vm.times[0]));
+      canvas.drawArc(rect, 0, 2 * pi, false, strokePainter);
+      canvas.drawLine(center,
+          Offset(center.dx, center.dy - base * (0.5 - radius)), strokePainter);
     }
   }
 

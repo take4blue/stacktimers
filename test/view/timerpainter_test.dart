@@ -124,4 +124,27 @@ void main() {
     await tester.pumpWidgetBuilder(testWidget);
     await screenMatchesGolden(tester, 'TimerOutPainter_3');
   });
+  testGoldens('inner_draw_item1', (WidgetTester tester) async {
+    final top = _Test1(1);
+    top.times.add(ControlItem(TimeTable(titleid: 1, iNo: 0, iTime: 720), 0));
+    top.totalTime = 720;
+    top.value = 0;
+    Get.put<TimerControlVM>(top);
+    final testWidget = GetMaterialApp(
+        home: CustomPaint(
+      painter: TimerInPainter(repaint: top),
+    ));
+    await tester.pumpWidgetBuilder(testWidget);
+    int counter = 0;
+    await screenMatchesGolden(tester, 'TimerInPainter_1${++counter}');
+    top.value = 360;
+    await tester.pumpAndSettle();
+    await screenMatchesGolden(tester, 'TimerInPainter_1${++counter}');
+    top.value = 719;
+    await tester.pumpAndSettle();
+    await screenMatchesGolden(tester, 'TimerInPainter_1${++counter}');
+    top.value = 720;
+    await tester.pumpAndSettle();
+    await screenMatchesGolden(tester, 'TimerInPainter_1${++counter}');
+  });
 }
