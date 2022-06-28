@@ -210,4 +210,15 @@ void main() {
     expect(top.isRunning, false);
     await top.closePage();
   });
+  test("restart", () async {
+    final top = TimerControlVM(6);
+    await top.loader();
+    await top.next();
+    await top.next();
+    await Future.delayed(const Duration(milliseconds: 2500));
+    expect(top.isRunning, false);
+    await top.start();
+    expect(top.currentTime, 0);
+    await top.closePage();
+  });
 }

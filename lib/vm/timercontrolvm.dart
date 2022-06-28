@@ -173,6 +173,13 @@ class TimerControlVM extends IDbLoader with Loader {
 
   /// タイマー開始
   FutureOr<void> start() async {
+    if (currentTime == totalTime) {
+      // すでに完了していた場合、再スタートする。
+      _timer.reset();
+      _index = 0;
+      _offsetTime = 0;
+      currentTime = 0;
+    }
     _timer.start();
     _nextTimerSet();
     update(["icons"]);
