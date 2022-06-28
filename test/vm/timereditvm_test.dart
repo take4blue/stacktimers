@@ -39,10 +39,11 @@ void main() {
   tearDown(Get.reset);
 
   test("timerlist", () async {
-    final target = EditItem(TimeTable(iTime: 100, titleid: 1));
+    final target = EditItem(TimeTable(iTime: 100, titleid: 1, iDuration: 1500));
     expect(target.timer.id, -1);
     expect(target.timer.titleid, 1);
     expect(target.time, "01:40");
+    expect(target.duration, "1.5");
   });
 
   test("loader", () async {

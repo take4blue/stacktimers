@@ -127,7 +127,7 @@ class TimerListItem extends StatelessWidget {
                     onTap: () => vm.editTime(index),
                     child: Text(vm.times[index].time)),
                 const SizedBox(
-                  width: 10,
+                  width: 20,
                 ),
                 GestureDetector(
                   onTap: () => vm.editColor(index),
@@ -140,12 +140,11 @@ class TimerListItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(
-                  width: 10,
+                  width: 20,
                 ),
-                IconButton(
-                  onPressed: () => vm.editDuration(index),
-                  icon: const Icon(Icons.edit_notifications),
-                )
+                GestureDetector(
+                    onTap: () => vm.editDuration(index),
+                    child: Text(vm.times[index].duration)),
               ],
             ),
           ),

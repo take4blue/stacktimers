@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/model/titletable.dart';
@@ -15,6 +16,12 @@ class EditItem {
 
   /// 時間を文字列化したもの
   String get time => TimeTable.formatter(timer.iTime);
+
+  /// 発音時間(秒で表示する)
+  String get duration {
+    final f = NumberFormat("0.0");
+    return f.format(timer.iDuration / 1000);
+  }
 }
 
 class TimerEditVM extends IDbLoader with Loader {

@@ -157,7 +157,7 @@ void main() {
         theme: ThemeData(fontFamily: "IPAGothic"),
         home: const Material(child: TimerListItem(2)));
     await tester.pumpWidgetBuilder(testWidget);
-    await tester.tap(find.byIcon(Icons.edit_notifications));
+    await tester.tap(find.byType(Text).last);
     await tester.pumpAndSettle();
     expect(top.func, "editDuration 2");
   });
