@@ -46,12 +46,12 @@ class TimeItem {
 /// [Timers]で発生するイベント処理用のインターフェース
 abstract class ITiemrsAction {
   /// タイマーが指定時間になった
-  void reach(TimeItem item);
+  void reach(int index, TimeItem item);
 
   /// 時間の更新
   ///
   /// [currentTime]:現在時刻。[index]:現在処理している[TimeTable]の位置。
-  void updateTime(int currentTime, TimeItem item);
+  void updateTime(int currentTime, int index, TimeItem item);
 }
 
 /// タイマー制御本体部分
@@ -96,7 +96,7 @@ class Timers {
   /// 現在時刻更新
   set currentTime(int value) {
     _currentTime = value;
-    _action.updateTime(_currentTime, _times[_index]);
+    _action.updateTime(_currentTime, _index, _times[_index]);
   }
 
   /// 現在の経過時間
@@ -119,7 +119,7 @@ class Timers {
           break;
         case WithinType.last:
           // 音を鳴らす
-          _action.reach(_times[i]);
+          _action.reach(i, _times[i]);
           _index = i;
           return true;
       }
