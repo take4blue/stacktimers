@@ -46,12 +46,18 @@ class TimeItem {
 /// [Timers]で発生するイベント処理用のインターフェース
 abstract class ITiemrsAction {
   /// タイマーが指定時間になった
-  void reach(int index, TimeItem item);
+  ///
+  /// [item]はバックから送信されたものはnullが入るのでフロント側はindexの元となる
+  /// 情報を持っておく必要あり。Timersから呼び出される場合はnull以外。
+  void reach(int index, TimeItem? item);
 
   /// 時間の更新
   ///
-  /// [currentTime]:現在時刻。[index]:現在処理している[TimeTable]の位置。
-  void updateTime(int currentTime, int index, TimeItem item);
+  /// [currentTime]:現在時刻。
+  /// [index]:現在処理している[TimeTable]の位置。
+  /// [item]はバックから送信されたものはnullが入るのでフロント側はindexの元となる
+  /// 情報を持っておく必要あり。Timersから呼び出される場合はnull以外。
+  void updateTime(int currentTime, int index, TimeItem? item);
 }
 
 /// タイマー制御本体部分

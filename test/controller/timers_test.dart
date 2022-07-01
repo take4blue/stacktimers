@@ -4,13 +4,13 @@ import 'package:stacktimers/controller/timers.dart';
 class _TestAction implements ITiemrsAction {
   final func = <String>[];
   @override
-  void reach(int index, TimeItem item) {
-    func.add("reach $index ${item.iDuration}");
+  void reach(int index, TimeItem? item) {
+    func.add("reach $index ${item?.iDuration}");
   }
 
   @override
-  void updateTime(int currentTime, int index, TimeItem item) {
-    func.add("updateTime $currentTime $index ${item.endTime}");
+  void updateTime(int currentTime, int index, TimeItem? item) {
+    func.add("updateTime $currentTime $index ${item?.endTime}");
   }
 }
 
