@@ -10,36 +10,6 @@ const _kStopSelf = 'stopself';
 const _kIsolateDone = 'isolatedone';
 const _kSendPort = "sendport";
 
-class IsolateObservable implements Observable {
-  IsolateObservable(this._port, this._recv, this._send);
-
-  final ReceivePort _port;
-  final Stream _recv;
-  final SendPort _send;
-
-  @override
-  void invoke(String method, [Map<String, dynamic>? args]) {
-    _send.send({_kMethod: method, _kArgs: args});
-  }
-
-  @override
-  Stream<Map<String, dynamic>?> on(String method) {
-    return _recv.transform(
-      StreamTransformer.fromHandlers(
-        handleData: (data, sink) {
-          if (data[_kMethod] == method) {
-            sink.add(data[_kArgs]);
-          }
-        },
-      ),
-    );
-  }
-
-  void close() {
-    _port.close();
-  }
-}
-
 /// 呼び出し側の処理
 class IsolateBackgroundService extends FlutterBackgroundServicePlatform {
   /// Registers this class as the default instance of
@@ -48,6 +18,7 @@ class IsolateBackgroundService extends FlutterBackgroundServicePlatform {
     FlutterBackgroundServicePlatform.instance = IsolateBackgroundService();
   }
 
+  /// コンストラクタ
   IsolateBackgroundService() {
     _recv = _recvPort.asBroadcastStream();
   }
@@ -101,22 +72,26 @@ class IsolateBackgroundService extends FlutterBackgroundServicePlatform {
   @override
   Future<bool> start() async {
     if (_onStart != null) {
-      _isRunning = true;
-      // 以下第2引数を_recvPort.sendPortだけにすると
-      // Illegal argument in isolate message: (object is a ReceivePort))
-      // が発生するが、Listにすると出なかった。不思議。
-      await Isolate.spawn(_isolateFunc, [_recvPort.sendPort, _onStart]);
+      // リスナーの設定:子供側が終了した時に受け取る情報
       late StreamSubscription<Map<String, dynamic>?> sub1;
       sub1 = on(_kIsolateDone).listen((_) {
         _isRunning = false;
         _send = null;
         sub1.cancel();
       });
+      // リスナーの設定:送信ポートの受信
       late StreamSubscription<Map<String, dynamic>?> sub2;
       sub2 = on(_kSendPort).listen((data) {
         _send = data?["port"];
         sub2.cancel();
       });
+
+      _isRunning = true;
+      // 以下第2引数を_recvPort.sendPortだけにすると
+      // Illegal argument in isolate message: (object is a ReceivePort))
+      // が発生するが、Listにすると出なかった。不思議。
+      await Isolate.spawn(_isolateFunc, [_recvPort.sendPort, _onStart]);
+
       return true;
     } else {
       return false;
@@ -131,7 +106,7 @@ class IsolateBackgroundService extends FlutterBackgroundServicePlatform {
       _kMethod: _kSendPort,
       _kArgs: {"port": recv.sendPort}
     });
-    final serivce = IsolateService(recv, send);
+    final serivce = IsolateService(recv, recv.asBroadcastStream(), send);
     serivce.on(_kStopSelf).listen(
           (event) => serivce.stopSelf(),
         );
@@ -146,24 +121,39 @@ class IsolateBackgroundService extends FlutterBackgroundServicePlatform {
 
 /// サービス側の処理
 class IsolateService extends ServiceInstance {
-  IsolateService(ReceivePort recv, SendPort send)
-      : _observable = IsolateObservable(recv, recv.asBroadcastStream(), send);
+  IsolateService(this._port, this._recv, this._send);
 
-  final IsolateObservable _observable;
+  /// 受信ポート
+  final ReceivePort _port;
+
+  /// 受信ポート:ブロードキャスト用
+  final Stream _recv;
+
+  /// 送信ポート
+  final SendPort _send;
 
   @override
   void invoke(String method, [Map<String, dynamic>? args]) {
-    _observable.invoke(method, args);
+    _send.send({_kMethod: method, _kArgs: args});
   }
 
   @override
   Stream<Map<String, dynamic>?> on(String method) {
-    return _observable.on(method);
+    return _recv.transform(
+      StreamTransformer.fromHandlers(
+        handleData: (data, sink) {
+          if (data[_kMethod] == method) {
+            sink.add(data[_kArgs]);
+          }
+        },
+      ),
+    );
   }
 
   @override
   Future<void> stopSelf() async {
     invoke(_kIsolateDone);
+    _port.close();
     Isolate.exit();
   }
 }
