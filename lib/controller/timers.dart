@@ -63,7 +63,10 @@ abstract class ITiemrsAction {
 /// タイマー制御本体部分
 class Timers {
   /// TimeTableのtoMapのListからTimersを生成する。
-  Timers.fromMap(this._action, List<Map<String, dynamic>> mapLists) {
+  Timers.fromMap(
+    List<Map<String, dynamic>> mapLists, {
+    ITiemrsAction? action,
+  }) : _action = action {
     totalTime = 0;
     _times.addAll(List.generate(mapLists.length, (i) {
       final item =
@@ -73,7 +76,12 @@ class Timers {
     }));
   }
 
-  final ITiemrsAction _action;
+  ITiemrsAction? _action;
+
+  /// アクション設定
+  set action(ITiemrsAction val) {
+    _action = val;
+  }
 
   /// 時間情報
   final _times = <TimeItem>[];
@@ -102,7 +110,7 @@ class Timers {
   /// 現在時刻更新
   set currentTime(int value) {
     _currentTime = value;
-    _action.updateTime(_currentTime, _index, _times[_index]);
+    _action?.updateTime(_currentTime, _index, _times[_index]);
   }
 
   /// 現在の経過時間
@@ -125,7 +133,7 @@ class Timers {
           break;
         case WithinType.last:
           // 音を鳴らす
-          _action.reach(i, _times[i]);
+          _action?.reach(i, _times[i]);
           _index = i;
           return true;
       }

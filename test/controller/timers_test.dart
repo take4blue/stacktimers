@@ -36,7 +36,7 @@ void main() {
       {"iTime": 7, "iDuration": 500},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     expect(result.totalTime, 15);
     expect(result.currentTime, 0);
     expect(result.isRunning, false);
@@ -50,7 +50,7 @@ void main() {
       {"iTime": 1, "iDuration": 300},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     result.start();
     expect(result.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 3500));
@@ -71,7 +71,7 @@ void main() {
       {"iTime": 3, "iDuration": 300},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     result.start();
     expect(result.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 8500));
@@ -90,6 +90,42 @@ void main() {
     expect(action.func[i++], "reach 2 300");
     expect(action.func[i++], "updateTime 8 2 8");
   });
+  test("start3", () async {
+    // Action無しの場合
+    final listMap = [
+      {"iTime": 1, "iDuration": 100},
+      {"iTime": 1, "iDuration": 200},
+      {"iTime": 1, "iDuration": 300},
+    ];
+    final result = Timers.fromMap(listMap);
+    result.start();
+    expect(result.isRunning, true);
+    await Future.delayed(const Duration(milliseconds: 3500));
+    expect(result.isRunning, false);
+  });
+  test("start4", () async {
+    // Action後付け
+    final listMap = [
+      {"iTime": 1, "iDuration": 100},
+      {"iTime": 1, "iDuration": 200},
+      {"iTime": 1, "iDuration": 300},
+    ];
+    final action = _TestAction();
+    final result = Timers.fromMap(listMap);
+    result.start();
+    expect(result.isRunning, true);
+    await Future.delayed(const Duration(milliseconds: 1500));
+    result.action = action;
+    await Future.delayed(const Duration(milliseconds: 2000));
+    expect(result.isRunning, false);
+    expect(action.func.length, 4);
+    int i = 0;
+    expect(action.func[i++], "reach 1 200");
+    expect(action.func[i++], "updateTime 2 2 3");
+    expect(action.func[i++], "reach 2 300");
+    expect(action.func[i++], "updateTime 3 2 3");
+  });
+
   test("pause1", () async {
     // ポーズしているかどうか
     final listMap = [
@@ -98,7 +134,7 @@ void main() {
       {"iTime": 1, "iDuration": 300},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     result.start();
     expect(result.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 1500));
@@ -117,7 +153,7 @@ void main() {
       {"iTime": 1, "iDuration": 300},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     result.start();
     expect(result.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 1500));
@@ -141,7 +177,7 @@ void main() {
       {"iTime": 1, "iDuration": 300},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     result.start();
     expect(result.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 3500));
@@ -170,7 +206,7 @@ void main() {
       {"iTime": 4, "iDuration": 300},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     result.next();
     expect(result.currentTime, 2);
     result.next();
@@ -190,7 +226,7 @@ void main() {
       {"iTime": 2, "iDuration": 300},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     result.start();
     await Future.delayed(const Duration(milliseconds: 1500));
     result.next();
@@ -222,7 +258,7 @@ void main() {
       {"iTime": 2, "iDuration": 300},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     result.next();
     result.next();
     result.prev();
@@ -247,7 +283,7 @@ void main() {
       {"iTime": 2, "iDuration": 300},
     ];
     final action = _TestAction();
-    final result = Timers.fromMap(action, listMap);
+    final result = Timers.fromMap(listMap, action: action);
     result.next();
     result.start(); // 2秒から開始
     await Future.delayed(const Duration(milliseconds: 2500));
