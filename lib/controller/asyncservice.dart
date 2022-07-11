@@ -11,15 +11,15 @@ const _kIsolateDone = 'isolatedone';
 const _kSendPort = "sendport";
 
 /// 呼び出し側の処理
-class IsolateBackgroundService extends FlutterBackgroundServicePlatform {
+class AsyncBackgroundService extends FlutterBackgroundServicePlatform {
   /// Registers this class as the default instance of
   /// [FlutterBackgroundServicePlatform].
   static void registerWith() {
-    FlutterBackgroundServicePlatform.instance = IsolateBackgroundService();
+    FlutterBackgroundServicePlatform.instance = AsyncBackgroundService();
   }
 
   /// コンストラクタ
-  IsolateBackgroundService() {
+  AsyncBackgroundService() {
     _recv = _recvPort.asBroadcastStream();
   }
 
@@ -85,8 +85,7 @@ class IsolateBackgroundService extends FlutterBackgroundServicePlatform {
       // 以下第2引数を_recvPort.sendPortだけにすると
       // Illegal argument in isolate message: (object is a ReceivePort))
       // が発生するが、Listにすると出なかった。不思議。
-      await Isolate.spawn(_isolateFunc, [_recvPort.sendPort, _onStart]);
-
+      await _isolateFunc([_recvPort.sendPort, _onStart]);
       final recv = await sub2.first;
       _send = recv?["port"];
 
@@ -104,10 +103,14 @@ class IsolateBackgroundService extends FlutterBackgroundServicePlatform {
       _kMethod: _kSendPort,
       _kArgs: {"port": recv.sendPort}
     });
-    final serivce = IsolateService(recv, recv.asBroadcastStream(), send);
-    serivce.on(_kStopSelf).listen(
-          (event) => serivce.stopSelf(),
-        );
+    final serivce = AsyncService(recv, recv.asBroadcastStream(), send);
+    late StreamSubscription<Map<String, dynamic>?> sub;
+    sub = serivce.on(_kStopSelf).listen(
+      (event) {
+        serivce.stopSelf();
+        sub.cancel();
+      },
+    );
     args[1](serivce);
   }
 
@@ -118,8 +121,8 @@ class IsolateBackgroundService extends FlutterBackgroundServicePlatform {
 }
 
 /// サービス側の処理
-class IsolateService extends ServiceInstance {
-  IsolateService(this._port, this._recv, this._send);
+class AsyncService extends ServiceInstance {
+  AsyncService(this._port, this._recv, this._send);
 
   /// 受信ポート
   final ReceivePort _port;
@@ -152,6 +155,5 @@ class IsolateService extends ServiceInstance {
   Future<void> stopSelf() async {
     invoke(_kIsolateDone);
     _port.close();
-    Isolate.exit();
   }
 }
