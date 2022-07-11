@@ -54,7 +54,6 @@ void main() {
     final data =
         TimeTable(titleid: 1, iColor: Colors.white, iDuration: 500, iTime: 10);
     final target = ControlItem(data, 10);
-    expect(target.doBeep, false);
     expect(target.startTime, 10);
     expect(target.endTime, data.iTime + 10);
     expect(target.iTime, data.iTime);
