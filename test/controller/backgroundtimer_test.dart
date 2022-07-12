@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stacktimers/controller/backgroundtimer.dart';
 import 'package:stacktimers/controller/timers.dart';
 import 'package:stacktimers/model/timetable.dart';
@@ -16,7 +17,12 @@ class _TestAction implements ITiemrsAction {
   }
 }
 
+const _kSValue = "data";
+
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
   test("standard", () async {
     final data = <TimeTable>[
       TimeTable(titleid: 1, iTime: 1, iDuration: 200),
@@ -30,6 +36,8 @@ void main() {
     expect(await target.isRunning(), true);
     await Future.delayed(const Duration(milliseconds: 3000));
     expect(await target.isRunning(), false);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString(_kSValue) != null, true);
   });
   test("stop", () async {
     final data = <TimeTable>[
@@ -44,6 +52,8 @@ void main() {
     target.kill();
     await Future.delayed(const Duration(milliseconds: 500));
     expect(await target.isRunning(), false);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString(_kSValue), null);
   });
   test("action1", () async {
     // 単純なデータでのアクション呼び出しチェック

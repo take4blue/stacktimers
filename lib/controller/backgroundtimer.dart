@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stacktimers/model/timetable.dart';
 
 import 'asyncservice.dart';
@@ -13,8 +14,6 @@ import 'timers.dart';
 
 // 以下はコマンド等で使用するキーワード
 const _kMCommand = "cmd"; // サーバーへのコマンド送付のメソッド名
-const _kMStartValue = "sv"; // サーバーに送る開始データのメソッド名
-const _kTValue = "a"; // [_kMStartValue]で送付するデータのタグ名
 const _kTFunction = "func"; // サーバーへの関数のタグ名
 const _kTResult = "result"; // サーバーからのリターンのタグ名
 
@@ -30,6 +29,9 @@ const _kFIsRunning = "running"; // isRunning確認用及びそのリターンの
 // (サーバーからは_kMCommandでタグ_kTFunctionに設定)
 const _kFUpdateTime = "updateTime";
 const _kFReach = "reach";
+
+// SharedPreferencesのキーワード
+const _kSValue = "data"; // TimeTableのデータ格納用
 
 /// バックグラウンドで動く[Timers]からイベント受けてそれをフォアグラウンド側に
 /// 送るための処理クラス
@@ -141,13 +143,14 @@ class BackgroundTimer {
 
   /// バックグラウンドの処理の開始
   Future<void> execute(List<TimeTable> times) async {
-    // Back側からの通信でFront側のアクション呼び出し
-    await _service.startService();
-
     // timerAction構築用のデータ送信
     final value =
         json.encode(List.generate(times.length, (i) => times[i].toMap()));
-    _service.invoke(_kMStartValue, {_kTValue: value});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kSValue, value);
+
+    // Back側からの通信でFront側のアクション呼び出し
+    await _service.startService();
   }
 
   /// バックグラウンドの処理を停止する。
@@ -207,15 +210,18 @@ class BackgroundTimer {
   ///
   /// これとのデータ受け渡しは[_service]経由で行う。
   static void backgroundFunc(ServiceInstance val) async {
-    DartPluginRegistrant.ensureInitialized();
-    final sub1 = val.on(_kMStartValue);
-    final data = await sub1.first;
-    if (data == null || data.length != 1) {
+    if (ServiceInstance is! AsyncService) {
+      DartPluginRegistrant.ensureInitialized();
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString(_kSValue);
+    if (data == null) {
       val.stopSelf();
+      prefs.clear();
     }
 
     // タイマーオブジェクトの作成
-    final rMap = (json.decode(data![_kTValue]) as List)
+    final rMap = (json.decode(data!) as List)
         .map((e) => e as Map<String, dynamic>)
         .toList();
     final action = BackTimerAction(val);
@@ -243,6 +249,7 @@ class BackgroundTimer {
           // バックグラウンド機能停止コマンド
           timerAction.pause();
           val.stopSelf();
+          prefs.clear();
           break;
       }
     });
