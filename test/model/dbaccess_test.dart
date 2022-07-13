@@ -10,7 +10,6 @@ import 'package:stacktimers/model/titletable.dart';
 import '../testutil.dart';
 
 void main() {
-  DbAccess.initialize();
   int counter = 0;
 
   test("file create", () async {

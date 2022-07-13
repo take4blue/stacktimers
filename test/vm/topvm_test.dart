@@ -23,7 +23,6 @@ Future<void> dbsetup(DbAccess db) async {
 }
 
 void main() {
-  DbAccess.initialize();
   int counter = 40;
 
   late DbAccess db;

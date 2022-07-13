@@ -25,7 +25,6 @@ class _TestAction implements ITiemrsAction {
 const _kSTimes = "times";
 
 void main() {
-  DbAccess.initialize();
   int counter = 100;
   late DbAccess db;
   final titleid = <int>[];

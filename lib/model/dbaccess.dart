@@ -28,12 +28,8 @@ class DbAccess {
   // onInit内で生成する。
   late Database _database;
 
-  /// mainで行うDB初期処理
-  static void initialize() {
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      sqfliteFfiInit();
-    }
-  }
+  /// 全体初期化済みかどうか
+  static bool _initialized = false;
 
   /// DB生成部分
   FutureOr<void> _onCreate(Database db, int version) async {
@@ -52,6 +48,10 @@ class DbAccess {
   /// データベースの初期化処理
   Future<DbAccess> init() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      if (!_initialized) {
+        _initialized = true;
+        sqfliteFfiInit();
+      }
       final f = databaseFactoryFfi;
       fullPathName = join(await f.getDatabasesPath(), _dbName);
       _database = await f.openDatabase(fullPathName,
