@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:stacktimers/controller/backgroundtimer.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/view/toppage.dart';
 import 'package:stacktimers/view/viewcontrol.dart';
@@ -12,6 +13,8 @@ void main() async {
   sqfliteFfiInit();
   final db = await DbAccess.create("appdata.db");
   final view = ViewControl();
+  final timer = BackgroundTimer();
+  timer.initialize();
   runApp(GetMaterialApp(
     translations: Messages(),
     locale: Get.deviceLocale,
@@ -21,6 +24,7 @@ void main() async {
       () {
         Get.put<DbAccess>(db);
         Get.put<ViewControl>(view);
+        Get.put<BackgroundTimer>(timer);
       },
     ),
     getPages: AppModule.page(),
