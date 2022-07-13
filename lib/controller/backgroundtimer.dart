@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 
 import 'asyncservice.dart';
@@ -31,13 +32,18 @@ const _kFUpdateTime = "updateTime";
 const _kFReach = "reach";
 
 // SharedPreferencesのキーワード
-const _kSValue = "data"; // TimeTableのデータ格納用
+const _kSTimes = "times"; // TimeTableのデータ格納用
+const _kSTitle = "title"; // Title情報
+const _kSTitleId = "titleid"; // titleid情報
+const _kSCurrentTime = "ctime"; // 現在時刻
+const _kSIndex = "index"; // 現在Itemのindex
 
 /// バックグラウンドで動く[Timers]からイベント受けてそれをフォアグラウンド側に
 /// 送るための処理クラス
 class BackTimerAction implements ITiemrsAction {
-  BackTimerAction(this.val);
+  BackTimerAction(this.val, this.prefs);
   final ServiceInstance val;
+  final SharedPreferences prefs;
 
   @override
   void reach(int index, TimeItem? item) {
@@ -46,6 +52,8 @@ class BackTimerAction implements ITiemrsAction {
 
   @override
   void updateTime(int currentTime, int index, TimeItem? item) {
+    prefs.setInt(_kSCurrentTime, currentTime);
+    prefs.setInt(_kSIndex, index);
     val.invoke(_kMCommand, {
       _kTFunction: _kFUpdateTime,
       "currentTime": currentTime,
@@ -57,7 +65,8 @@ class BackTimerAction implements ITiemrsAction {
 /// 時間になったらNotificationを発生させる処理。
 /// アプリがバックグラウンドもしくは存在しない場合こちらを使用する。
 class BackTimerNotificationAction extends BackTimerAction {
-  BackTimerNotificationAction(ServiceInstance val) : super(val);
+  BackTimerNotificationAction(ServiceInstance val, SharedPreferences prefs)
+      : super(val, prefs);
 
   late FlutterLocalNotificationsPlugin _plugin;
 
@@ -94,9 +103,6 @@ class BackTimerNotificationAction extends BackTimerAction {
 
 /// バックグラウンドで行うタイマーカウントダウン処理
 class BackgroundTimer {
-  /// 保存用のキーワード
-  static const kTimes = "times";
-
   late FlutterBackgroundService _service;
 
   /// フロント側のタイマーアクション処理
@@ -139,18 +145,6 @@ class BackgroundTimer {
           break;
       }
     });
-  }
-
-  /// バックグラウンドの処理の開始
-  Future<void> execute(List<TimeTable> times) async {
-    // timerAction構築用のデータ送信
-    final value =
-        json.encode(List.generate(times.length, (i) => times[i].toMap()));
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kSValue, value);
-
-    // Back側からの通信でFront側のアクション呼び出し
-    await _service.startService();
   }
 
   /// バックグラウンドの処理を停止する。
@@ -206,6 +200,63 @@ class BackgroundTimer {
     return false;
   }
 
+  /// バックグラウンドで動作しているものがあるかどうか。
+  /// あればその[titleid]をリターンで返す。無ければ[null]。
+  /// これはアプリケーション起動時にバックグラウンドで動いているタイマーがあるか
+  /// どうかを検出するために使用するAPIになる。
+  Future<int?> isRunningId() async {
+    if (await _service.isRunning()) {
+      final prefs = await SharedPreferences.getInstance();
+      final id = prefs.getInt(_kSTitleId);
+      final wTimesString = prefs.getString(_kSTimes);
+      if (id != null && wTimesString != null) {
+        return id;
+      }
+    }
+    return null;
+  }
+
+  /// バックグラウンドの処理の開始。
+  ///
+  /// データベースからデータをロード。
+  /// ロードしたデータは呼び出し側に返す。
+  /// そしてバックグラウンド処理の開始。
+  Future<List<dynamic>> execute(int titleid) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (await _service.isRunning()) {
+      // サービスが起動中の場合は既存のデータを返却する
+      final id = prefs.getInt(_kSTitleId);
+      final wTimesString = prefs.getString(_kSTimes);
+      if (id != null && titleid == id && wTimesString != null) {
+        // SharedPreferencesからデータを作成する
+        final title = prefs.getString(_kSTitle);
+        final wTimes = List<TimeTable>.from((json.decode(wTimesString) as List)
+            .map((e) => TimeTable.fromMap(e)));
+        return [title ?? "", wTimes];
+      } else {
+        // 動作中の場合でSharedPreferencesの内容が正しくない場合は停止しておき
+        // データベースからデータを取得し再稼働する。
+        kill();
+      }
+    }
+    // DBからデータを取り出してSharedPreferencesにも設定しておく
+    final titleTbl = await DbAccess.a.getTitle(titleid);
+    final wTimes = await DbAccess.a.getTimes(titleid);
+    final value =
+        json.encode(List.generate(wTimes.length, (i) => wTimes[i].toMap()));
+
+    await prefs.setInt(_kSTitleId, titleid);
+    await prefs.setString(_kSTitle, titleTbl.sTitle);
+    await prefs.setString(_kSTimes, value);
+
+    // Back側からの通信でFront側のアクション呼び出し
+    if (!(await _service.isRunning())) {
+      await _service.startService();
+    }
+
+    return [titleTbl.sTitle, wTimes];
+  }
+
   /// バックグラウンドで動く関数
   ///
   /// これとのデータ受け渡しは[_service]経由で行う。
@@ -214,7 +265,7 @@ class BackgroundTimer {
       DartPluginRegistrant.ensureInitialized();
     }
     final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getString(_kSValue);
+    final data = prefs.getString(_kSTimes);
     if (data == null) {
       val.stopSelf();
       prefs.clear();
@@ -224,7 +275,7 @@ class BackgroundTimer {
     final rMap = (json.decode(data!) as List)
         .map((e) => e as Map<String, dynamic>)
         .toList();
-    final action = BackTimerAction(val);
+    final action = BackTimerAction(val, prefs);
     final timerAction = Timers.fromMap(rMap, action: action);
 
     // タイマー操作関数(クライアント側からの通信受信処理)

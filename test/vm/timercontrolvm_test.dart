@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:stacktimers/controller/backgroundtimer.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/model/titletable.dart';
@@ -10,6 +12,35 @@ import 'package:stacktimers/vm/timercontrolvm.dart';
 
 import '../mockviewcontrol.dart';
 import '../testutil.dart';
+
+class _Test1 extends BackgroundTimer {
+  String func = "";
+  @override
+  void kill() {
+    func = "kill";
+    super.kill();
+  }
+
+  @override
+  void start() {
+    func = "start";
+  }
+
+  @override
+  void pause() {
+    func = "pause";
+  }
+
+  @override
+  void next() {
+    func = "next";
+  }
+
+  @override
+  void prev() {
+    func = "prev";
+  }
+}
 
 Future<void> dbsetup(DbAccess db) async {
   int i = 0;
@@ -35,11 +66,14 @@ Future<void> dbsetup(DbAccess db) async {
 
 void main() {
   sqfliteFfiInit();
+
   int counter = 80;
 
   late DbAccess db;
+  late _Test1 ctrl;
   late MockViewControl view;
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     final dbName = "test${counter++}.db";
     await removeDbFile(dbName);
     db = await DbAccess.create(dbName);
@@ -47,6 +81,9 @@ void main() {
     Get.put<DbAccess>(db);
     view = MockViewControl();
     Get.put<ViewControl>(view);
+    ctrl = _Test1();
+    await ctrl.initialize();
+    Get.put<BackgroundTimer>(ctrl);
   });
   tearDown(Get.reset);
 
@@ -59,12 +96,6 @@ void main() {
     expect(target.iTime, data.iTime);
     expect(target.iColor, data.iColor);
     expect(target.iDuration, data.iDuration);
-
-    expect(target.within(9), WithinType.outer);
-    expect(target.within(10), WithinType.inner);
-    expect(target.within(19), WithinType.inner);
-    expect(target.within(20), WithinType.last);
-    expect(target.within(21), WithinType.outer);
   });
 
   test("loader", () async {
@@ -74,6 +105,8 @@ void main() {
       updated1 = true;
     });
     await top.loader();
+    await Future.delayed(const Duration(microseconds: 10));
+    expect(await ctrl.isRunning(), true);
     expect(updated1, true);
     expect(top.currentTime, 0);
     expect(top.isRunning, true);
@@ -90,12 +123,11 @@ void main() {
     expect(top.totalRemain, TimeTable.formatter(sum));
     expect(top.lapRemain, TimeTable.formatter(top.times[0].endTime));
     expect(await top.closePage(), true);
+    expect(ctrl.func, "kill");
+    expect(await ctrl.isRunning(), false);
   });
 
   test("pause", () async {
-    // ポーズをして時間計測が停止しているかの確認として
-    // ポーズ後にリスナーを定義してそこに飛んでこないことを確認する
-    bool updated1 = false;
     bool updated2 = false;
     final top = TimerControlVM(3);
     await top.loader();
@@ -103,32 +135,25 @@ void main() {
       updated2 = true;
     });
     await top.pause();
-    top.addListener(() {
-      updated1 = true;
-    });
+    expect(ctrl.func, "pause");
     expect(top.isRunning, false);
-    await Future.delayed(const Duration(milliseconds: 2500));
-    expect(updated1, false); // タイマー割り込み実施可否
     expect(updated2, true); // アイコン領域の更新指示可否
     expect(view.func, "playNotification false 1"); // 音停止
     await top.closePage();
   });
 
   test("start", () async {
-    // currentTimeが更新されているかどうかで判断する
     bool updated2 = false;
     final top = TimerControlVM(3);
     await top.loader();
     await top.pause();
-    final work = top.currentTime;
     top.addListenerId("icons", () {
       updated2 = true;
     });
     await top.start();
     expect(top.isRunning, true);
-    await Future.delayed(const Duration(milliseconds: 2500));
     expect(updated2, true); // アイコン領域の更新指示可否
-    expect(top.currentTime, work + 2);
+    expect(ctrl.func, "start");
     await top.closePage();
   });
 
@@ -144,7 +169,7 @@ void main() {
     await top.closePage();
   });
 
-  test("currentTime", () async {
+  test("currentTime1", () async {
     // currentTimeへの設定で現在時間、残り時間文字列が更新されているか
     bool updated1 = false;
     bool updated2 = false;
@@ -166,58 +191,51 @@ void main() {
     expect(top.totalRemain, "01:07");
     await top.closePage();
   });
+  test("updateTime", () async {
+    // updateTimeの呼び出しで時間の更新をしているかどうか
+    bool updated1 = false;
+    bool updated2 = false;
+    final top = TimerControlVM(3);
+    await top.loader();
+    await top.pause();
+
+    top.addListenerId("time", () {
+      updated1 = true;
+    });
+    top.addListener(() {
+      updated2 = true;
+    });
+    top.updateTime(5, 0, null);
+    expect(updated1, true);
+    expect(updated2, true);
+    expect(top.lapRemain, "00:07");
+    expect(top.totalRemain, "01:07");
+    await top.closePage();
+  });
+
   test("next", () async {
     final top = TimerControlVM(3);
     await top.loader();
     await top.pause();
     await top.next();
-    expect(top.currentTime, 12);
-    await top.next();
-    expect(top.currentTime, 36);
-    await top.start();
-    await Future.delayed(const Duration(milliseconds: 2500));
-    await top.next();
-    expect(top.currentTime != 36, true);
-    expect(top.currentTime != 72, true);
+    expect(ctrl.func, "next");
     await top.closePage();
   });
   test("prev", () async {
     final top = TimerControlVM(3);
     await top.loader();
     await top.pause();
-    await top.next();
-    await top.next();
-    await top.start();
-    await Future.delayed(const Duration(milliseconds: 2500));
     await top.prev();
-    expect(top.currentTime, 36);
-    await Future.delayed(const Duration(milliseconds: 1500));
-    await top.prev();
-    expect(top.currentTime, 12);
-    await top.prev();
-    expect(top.currentTime, 0);
+    expect(ctrl.func, "prev");
     await top.closePage();
   });
   test("alarm", () async {
     final top = TimerControlVM(6);
     await top.loader();
-    await Future.delayed(const Duration(milliseconds: 1500));
+    top.reach(0, null);
     expect(view.func, "playNotification true 3000");
-    await Future.delayed(const Duration(milliseconds: 4500));
-    expect(top.currentTime, 5);
-    expect(view.func, "playNotification false 1"); // 末尾まで行ったので
-    expect(top.isRunning, false);
-    await top.closePage();
-  });
-  test("restart", () async {
-    final top = TimerControlVM(6);
-    await top.loader();
-    await top.next();
-    await top.next();
-    await Future.delayed(const Duration(milliseconds: 2500));
-    expect(top.isRunning, false);
-    await top.start();
-    expect(top.currentTime, 0);
+    top.reach(1, null);
+    expect(view.func, "playNotification true 500");
     await top.closePage();
   });
 }

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:stacktimers/controller/backgroundtimer.dart';
 import 'package:stacktimers/l10n/message.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
@@ -54,6 +55,7 @@ void main() async {
       )));
   late ViewControl view;
   setUp(() async {
+    Get.put<BackgroundTimer>(BackgroundTimer());
     view = ViewControl(navigatorKey: navigatorKey);
     Get.put<ViewControl>(view);
     final fileName = "test${counter++}.db";

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:stacktimers/controller/backgroundtimer.dart';
 import 'package:stacktimers/l10n/message.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/view/timercontrolpage.dart';
@@ -69,6 +70,7 @@ class _Test2 extends TimerControlVM {
 
 void main() {
   setUp(() {
+    Get.put<BackgroundTimer>(BackgroundTimer());
     Get.addTranslations(Messages().keys);
   });
   tearDown(Get.reset);

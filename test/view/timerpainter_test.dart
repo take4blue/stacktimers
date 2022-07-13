@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:stacktimers/controller/backgroundtimer.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/view/timerpainter.dart';
 import 'package:stacktimers/vm/timercontrolvm.dart';
@@ -18,6 +19,9 @@ class _Test1 extends TimerControlVM {
     _currentTime = value;
     refresh();
   }
+
+  @override
+  Future<void> loadDB() async {}
 }
 
 void addData(TimerControlVM top) {
@@ -27,6 +31,9 @@ void addData(TimerControlVM top) {
 }
 
 void main() {
+  setUp(() {
+    Get.put<BackgroundTimer>(BackgroundTimer());
+  });
   tearDown(Get.reset);
 
   testGoldens('outer_draw', (WidgetTester tester) async {
