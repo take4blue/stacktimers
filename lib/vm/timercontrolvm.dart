@@ -64,6 +64,10 @@ class TimerControlVM extends IDbLoader with Loader implements ITiemrsAction {
     _currentTime = value;
     lapRemain = TimeTable.formatter(times[_index].endTime - _currentTime);
     totalRemain = TimeTable.formatter(totalTime - _currentTime);
+    if (totalTime == _currentTime) {
+      // 時間到達したので
+      _isRunning = false;
+    }
     update(["time"]);
     update();
   }

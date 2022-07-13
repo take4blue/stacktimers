@@ -191,6 +191,30 @@ void main() {
     expect(top.totalRemain, "01:07");
     await top.closePage();
   });
+  test("currentTime2", () async {
+    // トータルタイムと同じ時間が設定されたらisRunningがfalseになるか。
+    bool updated1 = false;
+    bool updated2 = false;
+    final top = TimerControlVM(3);
+    await top.loader();
+    await top.pause();
+
+    top.addListenerId("time", () {
+      updated1 = true;
+    });
+    top.addListener(() {
+      updated2 = true;
+    });
+
+    top.currentTime = top.totalTime;
+    expect(updated1, true);
+    expect(updated2, true);
+    expect(top.lapRemain, "00:00");
+    expect(top.totalRemain, "00:00");
+    expect(top.isRunning, false);
+    await top.closePage();
+  });
+
   test("updateTime", () async {
     // updateTimeの呼び出しで時間の更新をしているかどうか
     bool updated1 = false;
