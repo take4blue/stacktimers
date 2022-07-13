@@ -9,6 +9,7 @@ import 'package:stacktimers/vm/topvm.dart';
 import 'l10n/message.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   DbAccess.initialize(); // DB生成前にこれを呼び出しておく必要あり。
   final db = await DbAccess.create("appdata.db");
   final view = ViewControl();
