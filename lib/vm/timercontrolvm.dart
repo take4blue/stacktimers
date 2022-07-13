@@ -66,7 +66,7 @@ class TimerControlVM extends IDbLoader with Loader implements ITiemrsAction {
     totalRemain = TimeTable.formatter(totalTime - _currentTime);
     if (totalTime == _currentTime) {
       // 時間到達したので
-      _isRunning = false;
+      isRunning = false;
     }
     update(["time"]);
     update();
@@ -101,6 +101,12 @@ class TimerControlVM extends IDbLoader with Loader implements ITiemrsAction {
 
   bool _isRunning = false;
 
+  /// 動作中かどうかの値の設定
+  set isRunning(bool value) {
+    _isRunning = value;
+    update(["icons"]);
+  }
+
   /// 動作中かどうか(*)
   bool get isRunning => _isRunning;
 
@@ -116,16 +122,14 @@ class TimerControlVM extends IDbLoader with Loader implements ITiemrsAction {
   /// タイマー開始(*)
   FutureOr<void> start() {
     _back.start();
-    _isRunning = true;
-    update(["icons"]);
+    isRunning = true;
   }
 
   /// タイマー一時停止(*)
   FutureOr<void> pause() {
     _back.pause();
-    _isRunning = false;
     ViewControl.a.playNotification(false, 1); // 発音停止
-    update(["icons"]);
+    isRunning = false;
   }
 
   /// 次のタイマー位置に移動(*)

@@ -194,6 +194,7 @@ void main() {
     // トータルタイムと同じ時間が設定されたらisRunningがfalseになるか。
     bool updated1 = false;
     bool updated2 = false;
+    bool updated3 = false;
     final top = TimerControlVM(3);
     await top.loader();
     await top.pause();
@@ -204,10 +205,14 @@ void main() {
     top.addListener(() {
       updated2 = true;
     });
+    top.addListenerId("icons", () {
+      updated3 = true;
+    });
 
     top.currentTime = top.totalTime;
     expect(updated1, true);
     expect(updated2, true);
+    expect(updated3, true);
     expect(top.lapRemain, "00:00");
     expect(top.totalRemain, "00:00");
     expect(top.isRunning, false);
