@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/model/titletable.dart';
@@ -11,7 +10,7 @@ import 'package:stacktimers/model/titletable.dart';
 import '../testutil.dart';
 
 void main() {
-  sqfliteFfiInit();
+  DbAccess.initialize();
   int counter = 0;
 
   test("file create", () async {

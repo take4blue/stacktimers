@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stacktimers/controller/backgroundtimer.dart';
 import 'package:stacktimers/controller/timers.dart';
 import 'package:stacktimers/model/dbaccess.dart';
@@ -26,7 +25,7 @@ class _TestAction implements ITiemrsAction {
 const _kSTimes = "times";
 
 void main() {
-  sqfliteFfiInit();
+  DbAccess.initialize();
   int counter = 100;
   late DbAccess db;
   final titleid = <int>[];
