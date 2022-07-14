@@ -12,7 +12,7 @@ class Messages extends Translations {
           "t2TextLap": "Lap",
         },
         'ja_JP': {
-          "title": "StackTimers",
+          "title": "スタマ",
           "commonLabelErrorRead": "読み込みに失敗しました。",
           "commonLabelNowLoading": "読み込み中。",
           "t1TextTitle": "タイトル名",
