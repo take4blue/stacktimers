@@ -9,6 +9,10 @@ import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/view/timercontrolpage.dart';
 import 'package:stacktimers/vm/timercontrolvm.dart';
 
+// 時間を取り扱うための係数
+// timercontrolvm.dart内の同名の変数に合わせて評価する
+const _kScale = 10;
+
 class _Test1 extends TimerControlVM {
   _Test1(int titleid) : super(titleid);
 
@@ -55,7 +59,7 @@ class _Test1 extends TimerControlVM {
     times.add(ControlItem(TimeTable(titleid: 1, iNo: 0, iTime: 30), 0));
     times.add(ControlItem(TimeTable(titleid: 1, iNo: 1, iTime: 40), 30));
     times.add(ControlItem(TimeTable(titleid: 1, iNo: 2, iTime: 10), 70));
-    totalTime = 30 + 40 + 10;
+    totalTime = (30 + 40 + 10) * _kScale;
   }
 }
 

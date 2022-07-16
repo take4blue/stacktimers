@@ -17,9 +17,21 @@ enum WithinType {
   last
 }
 
+// このページ内の時間の取り扱いを100ms単位にする。
+const _kScale = 10;
+
+extension on int {
+  /// 残り時間(秒)を計算する
+  int remain(int value) {
+    var val = (this - value);
+    return (val ~/ _kScale) + ((val % _kScale) != 0 ? 1 : 0);
+  }
+}
+
 /// 時間の項目
+/// [TimeTable], [offset]の時間データ単位は秒
 class ControlItem {
-  ControlItem(this._timer, this._offset);
+  ControlItem(this._timer, int offset) : _offset = offset * _kScale;
   final TimeTable _timer;
 
   /// 最終時間を求めるためのオフセット量
@@ -32,7 +44,7 @@ class ControlItem {
   int get endTime => _offset + iTime;
 
   /// [TimeTable].[iTime]の取得
-  int get iTime => _timer.iTime;
+  int get iTime => _timer.iTime * _kScale;
 
   /// [TimeTable].[iColor]の取得
   Color get iColor => _timer.iColor;
@@ -72,7 +84,7 @@ class TimerControlVM extends IDbLoader with Loader {
   int totalTime = 0;
 
   /// 現在の経過時間
-  int get elapsed => _offsetTime + _timer.elapsed.inSeconds;
+  int get elapsed => _offsetTime + _timer.elapsed.inMilliseconds ~/ 100;
 
   /// prev/nextで移動した際のオフセット時間
   int _offsetTime = 0;
@@ -89,8 +101,8 @@ class TimerControlVM extends IDbLoader with Loader {
   /// 現在時刻更新
   set currentTime(int value) {
     _currentTime = value;
-    lapRemain = TimeTable.formatter(times[_index].endTime - _currentTime);
-    totalRemain = TimeTable.formatter(totalTime - _currentTime);
+    lapRemain = TimeTable.formatter(times[_index].endTime.remain(_currentTime));
+    totalRemain = TimeTable.formatter(totalTime.remain(_currentTime));
     update(["time"]);
     update();
   }
@@ -167,7 +179,7 @@ class TimerControlVM extends IDbLoader with Loader {
   /// 秒の桁上がり時に処理ができるように、残りミリ秒+αで
   /// 割り込みが発生するように時間調整をする
   void _nextTimerSet() {
-    final duration = 1050 - (_timer.elapsedMilliseconds % 1000);
+    final duration = 105 - (_timer.elapsedMilliseconds % 100);
     _timerInterrupt = Timer(Duration(milliseconds: duration), _check);
   }
 
@@ -212,8 +224,8 @@ class TimerControlVM extends IDbLoader with Loader {
   FutureOr<void> prev() async {
     final now = elapsed;
     for (; _index >= 0; _index--) {
-      if (times[_index].startTime == now ||
-          times[_index].startTime + 1 == now) {
+      if (times[_index].startTime <= now &&
+          now <= times[_index].startTime + _kScale) {
         continue;
       }
       if (times[_index].startTime < now) {

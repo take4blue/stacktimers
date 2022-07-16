@@ -11,6 +11,10 @@ import 'package:stacktimers/vm/timercontrolvm.dart';
 import '../mockviewcontrol.dart';
 import '../testutil.dart';
 
+// 時間を取り扱うための係数
+// timercontrolvm.dart内の同名の変数に合わせて評価する
+const _kScale = 10;
+
 Future<void> dbsetup(DbAccess db) async {
   int i = 0;
   for (; i < 5; i++) {
@@ -55,17 +59,17 @@ void main() {
         TimeTable(titleid: 1, iColor: Colors.white, iDuration: 500, iTime: 10);
     final target = ControlItem(data, 10);
     expect(target.doBeep, false);
-    expect(target.startTime, 10);
-    expect(target.endTime, data.iTime + 10);
-    expect(target.iTime, data.iTime);
+    expect(target.startTime, 10 * _kScale);
+    expect(target.endTime, (data.iTime + 10) * _kScale);
+    expect(target.iTime, data.iTime * _kScale);
     expect(target.iColor, data.iColor);
     expect(target.iDuration, data.iDuration);
 
-    expect(target.within(9), WithinType.outer);
-    expect(target.within(10), WithinType.inner);
-    expect(target.within(19), WithinType.inner);
-    expect(target.within(20), WithinType.last);
-    expect(target.within(21), WithinType.outer);
+    expect(target.within(9 * _kScale), WithinType.outer);
+    expect(target.within(10 * _kScale), WithinType.inner);
+    expect(target.within(19 * _kScale), WithinType.inner);
+    expect(target.within(20 * _kScale), WithinType.last);
+    expect(target.within(21 * _kScale), WithinType.outer);
   });
 
   test("loader", () async {
@@ -81,15 +85,15 @@ void main() {
     expect(top.isNotLoadDb, false);
     expect(top.title, "Hoge 3");
     expect(top.times.length, 3);
-    int sum = 0;
+    int sum = 0; // これは秒
     for (int i = 0; i < top.times.length; i++) {
-      expect(top.times[i].iTime, 12 * (i + 1));
-      expect(top.times[i].startTime, sum);
+      expect(top.times[i].iTime, 12 * (i + 1) * _kScale);
+      expect(top.times[i].startTime, sum * _kScale);
       sum += 12 * (i + 1);
     }
-    expect(top.totalTime, sum);
+    expect(top.totalTime, sum * _kScale);
     expect(top.totalRemain, TimeTable.formatter(sum));
-    expect(top.lapRemain, TimeTable.formatter(top.times[0].endTime));
+    expect(top.lapRemain, TimeTable.formatter(top.times[0].endTime ~/ _kScale));
     expect(await top.closePage(), true);
   });
 
@@ -121,7 +125,7 @@ void main() {
     final top = TimerControlVM(3);
     await top.loader();
     await top.pause();
-    final work = top.currentTime;
+    final work = top.currentTime ~/ _kScale;
     top.addListenerId("icons", () {
       updated2 = true;
     });
@@ -129,7 +133,7 @@ void main() {
     expect(top.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 2500));
     expect(updated2, true); // アイコン領域の更新指示可否
-    expect(top.currentTime, work + 2);
+    expect(top.currentTime ~/ _kScale, work + 2); // 時間単位が秒を基準としていたのでそれに合わせてある
     await top.closePage();
   });
 
@@ -160,7 +164,7 @@ void main() {
       updated2 = true;
     });
 
-    top.currentTime = 5;
+    top.currentTime = 5 * _kScale;
     expect(updated1, true);
     expect(updated2, true);
     expect(top.lapRemain, "00:07");
@@ -172,14 +176,14 @@ void main() {
     await top.loader();
     await top.pause();
     await top.next();
-    expect(top.currentTime, 12);
+    expect(top.currentTime, 12 * _kScale);
     await top.next();
-    expect(top.currentTime, 36);
+    expect(top.currentTime, 36 * _kScale);
     await top.start();
     await Future.delayed(const Duration(milliseconds: 2500));
     await top.next();
-    expect(top.currentTime != 36, true);
-    expect(top.currentTime != 72, true);
+    expect(top.currentTime != 36 * _kScale, true);
+    expect(top.currentTime != 72 * _kScale, true);
     await top.closePage();
   });
   test("prev", () async {
@@ -191,12 +195,17 @@ void main() {
     await top.start();
     await Future.delayed(const Duration(milliseconds: 2500));
     await top.prev();
-    expect(top.currentTime, 36);
-    await Future.delayed(const Duration(milliseconds: 1500));
+    expect(top.currentTime, 36 * _kScale);
+
+    // 以下のdelayタイムは_kScaleによって変わる。
+    // _kScaleが1の場合は1500、10の場合は500
+    // 1の場合は単位は秒なので0～2未満がチェック対象になるが10の場合は
+    // 単位が100msなので0.0～1.1未満がチェック対象になるので。
+    await Future.delayed(const Duration(milliseconds: 500));
     await top.prev();
-    expect(top.currentTime, 12);
+    expect(top.currentTime, 12 * _kScale);
     await top.prev();
-    expect(top.currentTime, 0);
+    expect(top.currentTime, 0 * _kScale);
     await top.closePage();
   });
   test("alarm", () async {
@@ -205,7 +214,7 @@ void main() {
     await Future.delayed(const Duration(milliseconds: 1500));
     expect(view.func, "playNotification true 3000");
     await Future.delayed(const Duration(milliseconds: 4500));
-    expect(top.currentTime, 5);
+    expect(top.currentTime, 5 * _kScale);
     expect(view.func, "playNotification false 1"); // 末尾まで行ったので
     expect(top.isRunning, false);
     await top.closePage();
@@ -220,5 +229,31 @@ void main() {
     await top.start();
     expect(top.currentTime, 0);
     await top.closePage();
+  });
+
+  test("remain", () async {
+    final top = TimerControlVM(6);
+    await top.loader();
+    await top.pause();
+    top.currentTime = 0;
+    expect(top.lapRemain, "00:01");
+    expect(top.totalRemain, "00:05");
+    top.currentTime = 1;
+    expect(top.lapRemain, "00:01");
+    expect(top.totalRemain, "00:05");
+    top.currentTime = 9;
+    expect(top.lapRemain, "00:01");
+    expect(top.totalRemain, "00:05");
+    top.currentTime = 10;
+    expect(top.lapRemain, "00:00");
+    expect(top.totalRemain, "00:04");
+    await top.next();
+    await top.next();
+    top.currentTime = 49;
+    expect(top.lapRemain, "00:01");
+    expect(top.totalRemain, "00:01");
+    top.currentTime = 50;
+    expect(top.lapRemain, "00:00");
+    expect(top.totalRemain, "00:00");
   });
 }
