@@ -1,9 +1,12 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:get/get.dart';
 import 'package:path/path.dart';
-import 'package:sqflite_common/sqlite_api.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/model/titletable.dart';
-import 'package:get/get.dart';
 
 /// 同一ファイルにアクセスするためのデータベースヘルパークラス
 class DbAccess {
@@ -25,24 +28,40 @@ class DbAccess {
   // onInit内で生成する。
   late Database _database;
 
+  /// 全体初期化済みかどうか
+  static bool _initialized = false;
+
+  /// DB生成部分
+  FutureOr<void> _onCreate(Database db, int version) async {
+    await db.execute('CREATE TABLE $titleTable '
+        '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
+        'sTitle TEXT)');
+    await db.execute('CREATE TABLE $timeTable '
+        '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
+        'titleid INTEGER,'
+        'iNo INTEGER,'
+        'iTime INTEGER,'
+        'iDuration INTEGER,'
+        'iColor INTEGER)');
+  }
+
   /// データベースの初期化処理
   Future<DbAccess> init() async {
-    fullPathName = join(await databaseFactoryFfi.getDatabasesPath(), _dbName);
-    _database = await databaseFactoryFfi.openDatabase(fullPathName,
-        options: OpenDatabaseOptions(
-            version: 1,
-            onCreate: (db, version) async {
-              await db.execute('CREATE TABLE $titleTable '
-                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                  'sTitle TEXT)');
-              await db.execute('CREATE TABLE $timeTable '
-                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                  'titleid INTEGER,'
-                  'iNo INTEGER,'
-                  'iTime INTEGER,'
-                  'iDuration INTEGER,'
-                  'iColor INTEGER)');
-            }));
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      if (!_initialized) {
+        _initialized = true;
+        sqfliteFfiInit();
+      }
+      final f = databaseFactoryFfi;
+      fullPathName = join(await f.getDatabasesPath(), _dbName);
+      _database = await f.openDatabase(fullPathName,
+          options: OpenDatabaseOptions(version: 1, onCreate: _onCreate));
+    } else {
+      // こちらはUnitテストのカバレッジではこない
+      fullPathName = join(await getDatabasesPath(), _dbName);
+      _database =
+          await openDatabase(fullPathName, version: 1, onCreate: _onCreate);
+    }
     return this;
   }
 

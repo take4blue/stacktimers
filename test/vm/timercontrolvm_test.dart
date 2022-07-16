@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/model/titletable.dart';
@@ -38,7 +37,6 @@ Future<void> dbsetup(DbAccess db) async {
 }
 
 void main() {
-  sqfliteFfiInit();
   int counter = 80;
 
   late DbAccess db;
