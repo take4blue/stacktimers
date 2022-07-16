@@ -6,9 +6,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
+import 'package:wakelock/wakelock.dart';
 
 import 'asyncservice.dart';
 import 'timers.dart';
@@ -24,12 +26,14 @@ const _kFStart = "start";
 const _kFPause = "pause";
 const _kFNext = "next";
 const _kFPrev = "prev";
+const _kFLEvent = "event";
 const _kFIsRunning = "running"; // isRunning確認用及びそのリターンのmethod名
 
 // 以下はクライアント側で実行する関数名
 // (サーバーからは_kMCommandでタグ_kTFunctionに設定)
 const _kFUpdateTime = "updateTime";
 const _kFReach = "reach";
+const _kFStatus = "status";
 
 // SharedPreferencesのキーワード
 const _kSTimes = "times"; // TimeTableのデータ格納用
@@ -45,6 +49,12 @@ class BackTimerAction implements ITiemrsAction {
   final ServiceInstance val;
   final SharedPreferences prefs;
 
+  /// 総合計時間
+  int totalTime = 0;
+
+  /// アプリケーションの状態(現状未使用)
+  bool isForeground = true;
+
   @override
   void reach(int index, TimeItem? item) {
     val.invoke(_kMCommand, {_kTFunction: _kFReach, "index": index});
@@ -59,6 +69,17 @@ class BackTimerAction implements ITiemrsAction {
       "currentTime": currentTime,
       "index": index
     });
+    String lap = "--:--";
+    if (item != null) {
+      lap = TimeTable.formatter(item.endTime - currentTime);
+    }
+    final total = TimeTable.formatter(totalTime - currentTime);
+    debugPrint("Remain lap $lap total $total");
+  }
+
+  @override
+  void status(bool isRunning) {
+    val.invoke(_kMCommand, {_kTFunction: _kFStatus, "isRunning": isRunning});
   }
 }
 
@@ -99,10 +120,13 @@ class BackTimerNotificationAction extends BackTimerAction {
     super.reach(index, item);
     _showNotification();
   }
+
+  @override
+  void status(bool isRunning) {}
 }
 
 /// バックグラウンドで行うタイマーカウントダウン処理
-class BackgroundTimer {
+class BackgroundTimer extends FullLifeCycleController with FullLifeCycleMixin {
   late FlutterBackgroundService _service;
 
   /// フロント側のタイマーアクション処理
@@ -142,6 +166,14 @@ class BackgroundTimer {
           break;
         case _kFUpdateTime:
           action?.updateTime(event["currentTime"], event["index"], null);
+          break;
+        case _kFStatus:
+          action?.status(event["isRunning"]);
+          if (event["isRunning"]) {
+            Wakelock.enable();
+          } else {
+            Wakelock.disable();
+          }
           break;
       }
     });
@@ -257,6 +289,37 @@ class BackgroundTimer {
     return [titleTbl.sTitle, wTimes];
   }
 
+  /// [Timers.prev]を呼び出す。
+  void _toEvent(bool isForeground) => _service.isRunning().then((value) {
+        if (value) {
+          _service.invoke(_kMCommand,
+              {_kTFunction: _kFLEvent, "isForeground": isForeground});
+        }
+      });
+
+  @override
+  void onDetached() {
+    kill();
+  }
+
+  @override
+  void onInactive() {
+    _toEvent(false);
+    debugPrint("onInactive");
+  }
+
+  @override
+  void onPaused() {
+    _toEvent(false);
+    debugPrint("onPaused");
+  }
+
+  @override
+  void onResumed() {
+    _toEvent(true);
+    debugPrint("onResumed");
+  }
+
   /// バックグラウンドで動く関数
   ///
   /// これとのデータ受け渡しは[_service]経由で行う。
@@ -277,6 +340,7 @@ class BackgroundTimer {
         .toList();
     final action = BackTimerAction(val, prefs);
     final timerAction = Timers.fromMap(rMap, action: action);
+    action.totalTime = timerAction.totalTime;
 
     // タイマー操作関数(クライアント側からの通信受信処理)
     val.on(_kMCommand).listen((event) {
@@ -301,6 +365,9 @@ class BackgroundTimer {
           timerAction.pause();
           val.stopSelf();
           prefs.clear();
+          break;
+        case _kFLEvent:
+          action.isForeground = event["isForeground"];
           break;
       }
     });

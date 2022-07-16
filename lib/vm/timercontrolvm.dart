@@ -91,6 +91,11 @@ class TimerControlVM extends IDbLoader with Loader implements ITiemrsAction {
     _index = index;
   }
 
+  @override
+  void status(bool isRunning) {
+    _isRunning = isRunning;
+  }
+
   /// トップ画面に戻る処理(*)
   Future<bool> closePage() async {
     _back.pause();

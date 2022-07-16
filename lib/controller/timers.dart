@@ -58,6 +58,11 @@ abstract class ITiemrsAction {
   /// [item]はバックから送信されたものはnullが入るのでフロント側はindexの元となる
   /// 情報を持っておく必要あり。Timersから呼び出される場合はnull以外。
   void updateTime(int currentTime, int index, TimeItem? item);
+
+  /// start/pause(stop)時に呼び出しされるコールバック
+  ///
+  /// [isRunning]がtrueの場合、startが呼び出された
+  void status(bool isRunning);
 }
 
 /// タイマー制御本体部分
@@ -180,12 +185,14 @@ class Timers {
     }
     _timer.start();
     _nextTimerSet();
+    _action?.status(true);
   }
 
   void pause() {
     _timer.stop();
     _timerInterrupt?.cancel();
     _timerInterrupt = null;
+    _action?.status(false);
   }
 
   void next() {

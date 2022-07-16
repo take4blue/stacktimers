@@ -12,6 +12,11 @@ class _TestAction implements ITiemrsAction {
   void updateTime(int currentTime, int index, TimeItem? item) {
     func.add("updateTime $currentTime $index ${item?.endTime}");
   }
+
+  @override
+  void status(bool isRunning) {
+    func.add("status $isRunning");
+  }
 }
 
 void main() {
@@ -55,13 +60,16 @@ void main() {
     expect(result.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 3500));
     expect(result.isRunning, false);
-    expect(action.func.length, 6);
-    expect(action.func[0], "reach 0 100");
-    expect(action.func[1], "updateTime 1 1 2");
-    expect(action.func[2], "reach 1 200");
-    expect(action.func[3], "updateTime 2 2 3");
-    expect(action.func[4], "reach 2 300");
-    expect(action.func[5], "updateTime 3 2 3");
+    expect(action.func.length, 8);
+    var i = 0;
+    expect(action.func[i++], "status true");
+    expect(action.func[i++], "reach 0 100");
+    expect(action.func[i++], "updateTime 1 1 2");
+    expect(action.func[i++], "reach 1 200");
+    expect(action.func[i++], "updateTime 2 2 3");
+    expect(action.func[i++], "reach 2 300");
+    expect(action.func[i++], "updateTime 3 2 3");
+    expect(action.func[i++], "status false");
   });
   test("start2", () async {
     // きちんと3このデータを順番通りに進めているか。
@@ -76,8 +84,9 @@ void main() {
     expect(result.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 8500));
     expect(result.isRunning, false);
-    expect(action.func.length, 11);
+    expect(action.func.length, 13);
     int i = 0;
+    expect(action.func[i++], "status true");
     expect(action.func[i++], "updateTime 1 0 2");
     expect(action.func[i++], "reach 0 100");
     expect(action.func[i++], "updateTime 2 1 5");
@@ -89,6 +98,7 @@ void main() {
     expect(action.func[i++], "updateTime 7 2 8");
     expect(action.func[i++], "reach 2 300");
     expect(action.func[i++], "updateTime 8 2 8");
+    expect(action.func[i++], "status false");
   });
   test("start3", () async {
     // Action無しの場合
@@ -118,12 +128,13 @@ void main() {
     result.action = action;
     await Future.delayed(const Duration(milliseconds: 2000));
     expect(result.isRunning, false);
-    expect(action.func.length, 4);
+    expect(action.func.length, 5);
     int i = 0;
     expect(action.func[i++], "reach 1 200");
     expect(action.func[i++], "updateTime 2 2 3");
     expect(action.func[i++], "reach 2 300");
     expect(action.func[i++], "updateTime 3 2 3");
+    expect(action.func[i++], "status false");
   });
 
   test("pause1", () async {
@@ -141,9 +152,12 @@ void main() {
     result.pause();
     await Future.delayed(const Duration(milliseconds: 2000));
     expect(result.isRunning, false);
-    expect(action.func.length, 2);
-    expect(action.func[0], "reach 0 100");
-    expect(action.func[1], "updateTime 1 1 2");
+    expect(action.func.length, 4);
+    var i = 0;
+    expect(action.func[i++], "status true");
+    expect(action.func[i++], "reach 0 100");
+    expect(action.func[i++], "updateTime 1 1 2");
+    expect(action.func[i++], "status false");
   });
   test("pause-start", () async {
     // pauseした後startで再スタートするかどうか
@@ -161,13 +175,18 @@ void main() {
     result.start();
     await Future.delayed(const Duration(milliseconds: 2000));
     expect(result.isRunning, false);
-    expect(action.func.length, 6);
-    expect(action.func[0], "reach 0 100");
-    expect(action.func[1], "updateTime 1 1 2");
-    expect(action.func[2], "reach 1 200");
-    expect(action.func[3], "updateTime 2 2 3");
-    expect(action.func[4], "reach 2 300");
-    expect(action.func[5], "updateTime 3 2 3");
+    expect(action.func.length, 10);
+    var i = 0;
+    expect(action.func[i++], "status true");
+    expect(action.func[i++], "reach 0 100");
+    expect(action.func[i++], "updateTime 1 1 2");
+    expect(action.func[i++], "status false");
+    expect(action.func[i++], "status true");
+    expect(action.func[i++], "reach 1 200");
+    expect(action.func[i++], "updateTime 2 2 3");
+    expect(action.func[i++], "reach 2 300");
+    expect(action.func[i++], "updateTime 3 2 3");
+    expect(action.func[i++], "status false");
   });
   test("restart", () async {
     // 最後まで行って、startでリスタートするかどうか
@@ -182,21 +201,23 @@ void main() {
     expect(result.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 3500));
     expect(result.isRunning, false);
-    expect(action.func.length, 6);
+    expect(action.func.length, 8);
     action.func.clear();
     result.start();
     expect(result.isRunning, true);
     await Future.delayed(const Duration(milliseconds: 3500));
     expect(result.isRunning, false);
-    expect(action.func.length, 7);
+    expect(action.func.length, 9);
     int i = 0;
     expect(action.func[i++], "updateTime 0 0 1"); // 0リセットが入る
+    expect(action.func[i++], "status true");
     expect(action.func[i++], "reach 0 100");
     expect(action.func[i++], "updateTime 1 1 2");
     expect(action.func[i++], "reach 1 200");
     expect(action.func[i++], "updateTime 2 2 3");
     expect(action.func[i++], "reach 2 300");
     expect(action.func[i++], "updateTime 3 2 3");
+    expect(action.func[i++], "status false");
   });
   test("next1", () async {
     // stop中にnextを試す
@@ -240,8 +261,9 @@ void main() {
     expect(result.currentTime, 6);
     await Future.delayed(const Duration(milliseconds: 1500));
     expect(result.isRunning, false);
-    expect(action.func.length, 7);
+    expect(action.func.length, 9);
     int i = 0;
+    expect(action.func[i++], "status true");
     expect(action.func[i++], "updateTime 1 0 2");
     expect(action.func[i++], "updateTime 2 1 5");
     expect(action.func[i++], "updateTime 3 1 5");
@@ -249,6 +271,7 @@ void main() {
     expect(action.func[i++], "updateTime 6 2 7");
     expect(action.func[i++], "reach 2 300");
     expect(action.func[i++], "updateTime 7 2 7");
+    expect(action.func[i++], "status false");
   });
   test("prev1", () async {
     // stop中にnextを試す
@@ -294,13 +317,15 @@ void main() {
     result.prev();
     expect(result.currentTime, 0);
     result.pause();
-    expect(action.func.length, 6);
+    expect(action.func.length, 8);
     int i = 0;
     expect(action.func[i++], "updateTime 2 1 5");
+    expect(action.func[i++], "status true");
     expect(action.func[i++], "updateTime 3 1 5");
     expect(action.func[i++], "updateTime 4 1 5");
     expect(action.func[i++], "updateTime 2 1 5");
     expect(action.func[i++], "updateTime 3 1 5");
     expect(action.func[i++], "updateTime 0 0 2");
+    expect(action.func[i++], "status false");
   });
 }
