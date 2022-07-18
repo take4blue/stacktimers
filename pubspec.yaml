@@ -21,6 +21,7 @@ dependencies:
   flutter_ringtone_player: ^3.2.0
   flutter_picker: ^2.0.3
   golden_toolkit: ^0.13.0
+  shared_preferences: ^2.0.15
 
 dev_dependencies:
   flutter_test:
