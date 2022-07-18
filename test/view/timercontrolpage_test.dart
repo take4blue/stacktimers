@@ -35,8 +35,8 @@ class _Test1 extends TimerControlVM {
   }
 
   @override
-  FutureOr<void> pause() async {
-    func = "pause";
+  FutureOr<void> pause({bool stopSound = true}) async {
+    func = "pause $stopSound";
   }
 
   @override
@@ -175,7 +175,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.skip_next));
     expect(top.func, "next");
     await tester.tap(find.byIcon(Icons.pause));
-    expect(top.func, "pause");
+    expect(top.func, "pause true");
     top.wIsRunning = false;
     top.update(["icons"]);
     await tester.pumpAndSettle();

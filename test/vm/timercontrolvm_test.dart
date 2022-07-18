@@ -56,7 +56,6 @@ void main() {
     final data =
         TimeTable(titleid: 1, iColor: Colors.white, iDuration: 500, iTime: 10);
     final target = ControlItem(data, 10);
-    expect(target.doBeep, false);
     expect(target.startTime, 10 * _kScale);
     expect(target.endTime, (data.iTime + 10) * _kScale);
     expect(target.iTime, data.iTime * _kScale);
@@ -213,9 +212,10 @@ void main() {
     expect(view.func, "playNotification true 3000");
     await Future.delayed(const Duration(milliseconds: 4500));
     expect(top.currentTime, 5 * _kScale);
-    expect(view.func, "playNotification false 1"); // 末尾まで行ったので
+    expect(view.func, "playNotification true 500"); // 末尾まで行ったので
     expect(top.isRunning, false);
     await top.closePage();
+    expect(view.func, "playNotification false 1"); // 音を止める
   });
   test("restart", () async {
     final top = TimerControlVM(6);

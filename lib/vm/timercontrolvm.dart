@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/view/viewcontrol.dart';
@@ -18,20 +20,25 @@ enum WithinType {
 }
 
 // このページ内の時間の取り扱いを100ms単位にする。
-const _kScale = 10;
+const _kScaleFromSec = 10;
+const _kScaleFromMili = 100;
+
+// shared_preferencesのキーワード
+const _kKeyStartTime = "start";
+const _kKeyOffset = "offset";
 
 extension on int {
   /// 残り時間(秒)を計算する
   int remain(int value) {
     var val = (this - value);
-    return (val ~/ _kScale) + ((val % _kScale) != 0 ? 1 : 0);
+    return (val ~/ _kScaleFromSec) + ((val % _kScaleFromSec) != 0 ? 1 : 0);
   }
 }
 
 /// 時間の項目
 /// [TimeTable], [offset]の時間データ単位は秒
 class ControlItem {
-  ControlItem(this._timer, int offset) : _offset = offset * _kScale;
+  ControlItem(this._timer, int offset) : _offset = offset * _kScaleFromSec;
   final TimeTable _timer;
 
   /// 最終時間を求めるためのオフセット量
@@ -44,16 +51,13 @@ class ControlItem {
   int get endTime => _offset + iTime;
 
   /// [TimeTable].[iTime]の取得
-  int get iTime => _timer.iTime * _kScale;
+  int get iTime => _timer.iTime * _kScaleFromSec;
 
   /// [TimeTable].[iColor]の取得
   Color get iColor => _timer.iColor;
 
   /// [TimeTable].[iDuration]の取得
   int get iDuration => _timer.iDuration;
-
-  /// 音を鳴らしたかどうか
-  bool doBeep = false;
 
   /// [time]が[startTime]～[endTime]の間かどうか
   WithinType within(int time) {
@@ -83,14 +87,29 @@ class TimerControlVM extends IDbLoader with Loader {
   /// 総時間
   int totalTime = 0;
 
+  /// Startした時刻
+  int _startTime = 0;
+
+  bool _isRunning = false;
+
   /// 現在の経過時間
-  int get elapsed => _offsetTime + _timer.elapsed.inMilliseconds ~/ 100;
+  int get elapsed => _offsetTime + (_isRunning ? _now - _startTime : 0);
 
   /// prev/nextで移動した際のオフセット時間
   int _offsetTime = 0;
 
-  /// ストップウォッチ情報
-  final _timer = Stopwatch();
+  /// オフセットの再設定
+  set offsetTime(int value) {
+    _offsetTime = value;
+    _startTime = _now;
+    _pref.setInt(_kKeyOffset, _offsetTime);
+    for (int i = 0; i < times.length; i++) {
+      if (times[i].within(value) == WithinType.inner) {
+        _index = i;
+        break;
+      }
+    }
+  }
 
   /// 表示用の現在の経過時間。
   int _currentTime = 0;
@@ -132,7 +151,6 @@ class TimerControlVM extends IDbLoader with Loader {
           // 音を鳴らす
           lapRemain = TimeTable.formatter(0);
           ViewControl.a.playNotification(true, times[i].iDuration);
-          times[i].doBeep = true;
           return;
       }
     }
@@ -152,7 +170,7 @@ class TimerControlVM extends IDbLoader with Loader {
         // 最終時間に至ってなければタイマー割り込み継続
         _nextTimerSet();
       } else if (now >= totalTime) {
-        pause();
+        pause(stopSound: false);
       }
     }
   }
@@ -160,11 +178,12 @@ class TimerControlVM extends IDbLoader with Loader {
   /// トップ画面に戻る処理
   Future<bool> closePage() async {
     await pause();
+    _pref.remove(_kKeyOffset);
     return true;
   }
 
   /// 動作中かどうか
-  bool get isRunning => _timer.isRunning;
+  bool get isRunning => _isRunning;
 
   /// start/stopの切り替え
   FutureOr<void> toggleRunnning() async {
@@ -179,28 +198,34 @@ class TimerControlVM extends IDbLoader with Loader {
   /// 秒の桁上がり時に処理ができるように、残りミリ秒+αで
   /// 割り込みが発生するように時間調整をする
   void _nextTimerSet() {
-    final duration = 105 - (_timer.elapsedMilliseconds % 100);
-    _timerInterrupt = Timer(Duration(milliseconds: duration), _check);
+    _timerInterrupt = Timer(const Duration(milliseconds: 100), _check);
   }
+
+  /// 現在の時刻
+  int get _now => DateTime.now().millisecondsSinceEpoch ~/ _kScaleFromMili;
 
   /// タイマー開始
   FutureOr<void> start() async {
     if (currentTime == totalTime) {
       // すでに完了していた場合、再スタートする。
-      _timer.reset();
-      _index = 0;
-      _offsetTime = 0;
-      currentTime = 0;
+      currentTime = offsetTime = 0;
+    } else {
+      offsetTime = elapsed;
     }
-    _timer.start();
+    _pref.setInt(_kKeyStartTime, _now);
+    _isRunning = true;
     _nextTimerSet();
     update(["icons"]);
   }
 
   /// タイマー一時停止
-  FutureOr<void> pause() async {
-    _timer.stop();
-    ViewControl.a.playNotification(false, 1); // 発音停止
+  FutureOr<void> pause({bool stopSound = true}) async {
+    _isRunning = false;
+    offsetTime = elapsed;
+    _pref.remove(_kKeyStartTime);
+    if (stopSound) {
+      ViewControl.a.playNotification(false, 1); // 発音停止
+    }
     _timerInterrupt?.cancel();
     _timerInterrupt = null;
     update(["icons"]);
@@ -210,11 +235,9 @@ class TimerControlVM extends IDbLoader with Loader {
   FutureOr<void> next() async {
     final now = elapsed;
     for (int i = _index; i < times.length - 1; i++) {
-      times[i].doBeep = true;
       if (now < times[i].endTime) {
         _index = i + 1;
-        _timer.reset();
-        _offsetTime = currentTime = times[_index].startTime;
+        currentTime = offsetTime = times[_index].startTime;
         break;
       }
     }
@@ -225,22 +248,24 @@ class TimerControlVM extends IDbLoader with Loader {
     final now = elapsed;
     for (; _index >= 0; _index--) {
       if (times[_index].startTime <= now &&
-          now <= times[_index].startTime + _kScale) {
+          now <= times[_index].startTime + _kScaleFromSec) {
         continue;
       }
       if (times[_index].startTime < now) {
         break;
       }
     }
-    _timer.reset();
     _index = max(_index, 0);
-    _offsetTime = currentTime = times[_index].startTime;
+    currentTime = offsetTime = times[_index].startTime;
   }
+
+  /// 共有データ
+  late SharedPreferences _pref;
 
   @override
   Future<void> loadDB() async {
+    _pref = await SharedPreferences.getInstance();
     times.clear();
-    _timer.reset();
 
     // データベースを読み込んだ後即計測開始
     final titleTbl = await DbAccess.a.getTitle(_titleid);
@@ -256,8 +281,7 @@ class TimerControlVM extends IDbLoader with Loader {
       totalTime += time.iTime;
     }
 
-    _index = 0;
-    _offsetTime = 0;
+    offsetTime = 0;
     currentTime = 0;
     start();
   }
