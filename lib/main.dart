@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/view/toppage.dart';
@@ -8,6 +9,11 @@ import 'package:stacktimers/vm/topvm.dart';
 import 'l10n/message.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   final db = await DbAccess.create("appdata.db");
   final view = ViewControl();
   runApp(GetMaterialApp(
