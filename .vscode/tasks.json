@@ -18,7 +18,7 @@
 			"command": "flutter",
 			"args": [
 				"test",
-				"--update-goldens",
+				"--update-goldens"
 			],
 			"group": {
 				"kind": "test",
@@ -37,9 +37,9 @@
 				"$dart-build_runner"
 			],
 			"group": {
-				"kind": "test",
+				"kind": "test"
 			},
-			"label": "flutter: Coverage",
+			"label": "flutter: Coverage"
 		},
 		{
 			"type": "flutter",
@@ -53,11 +53,41 @@
 			"problemMatcher": [
 				"$dart-build_runner"
 			],
+			"group": "build",
+			"label": "flutter: build_runner"
+		},
+		{
+			"type": "flutter",
+			"command": "flutter",
+			"args": [
+				"build",
+				"apk",
+				"--release"
+			],
 			"group": {
 				"kind": "build",
 				"isDefault": true
 			},
-			"label": "flutter: build_runner",
+			"problemMatcher": [],
+			"label": "flutter: flutter build release apk",
+			"detail": ""
+		},
+		{
+			"type": "flutter",
+			"command": "flutter",
+			"args": [
+				"install",
+				"-d",
+				"CPH2099"
+			],
+			"group": {
+				"kind": "none",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"label": "flutter: install",
+			"detail": ""
 		}
+
 	]
 }

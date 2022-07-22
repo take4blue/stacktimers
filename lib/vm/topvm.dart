@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:optimize_battery/optimize_battery.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/model/titletable.dart';
@@ -63,6 +64,10 @@ class TopVM extends IDbLoader with Loader {
   /// データ構築
   @override
   Future<void> loadDB() async {
+    final isIgnored = await OptimizeBattery.isIgnoringBatteryOptimizations();
+    if (!isIgnored) {
+      await OptimizeBattery.stopOptimizingBatteryUsage();
+    }
     titles.clear();
     final table = await DbAccess.a.getTitles;
     for (final item in table) {
