@@ -10,7 +10,7 @@ void main() {
     expect(result.titleid, 1);
     expect(result.iNo, 0);
     expect(result.iTime, 0);
-    expect(result.iDuration, 500);
+    expect(result.iDuration, 3000);
     expect(result.iColor, const Color(0xFF22B14C));
   });
   test("construct2", () {

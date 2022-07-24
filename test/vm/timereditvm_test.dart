@@ -73,7 +73,7 @@ void main() {
     expect(top.times.length, 4);
     expect(top.times[3].timer.id, -1);
     expect(top.times[3].timer.titleid, 3);
-    expect(top.times[3].timer.iDuration, 500);
+    expect(top.times[3].timer.iDuration, 3000);
     expect(top.times[3].timer.iNo, 3);
     expect(top.times[3].timer.iTime, 0);
     expect(top.isNotLoadDb, false);

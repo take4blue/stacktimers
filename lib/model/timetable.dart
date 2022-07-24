@@ -13,7 +13,7 @@ class TimeTable {
       : id = id ?? -1,
         iNo = iNo ?? 0,
         iTime = iTime ?? 0,
-        iDuration = iDuration ?? 500,
+        iDuration = iDuration ?? 3000,
         iColor = iColor ?? _defaultColor(iNo ?? 0);
 
   /// 一意な番号(自動採番)
