@@ -49,6 +49,9 @@ class TopVM extends IDbLoader with Loader {
   /// タイマー編集処理
   FutureOr<void> editTimer(int index) async {
     await ViewControl.a.toEdit(titles[index].id);
+    // データを再読み込み
+    final item = await DbAccess.a.getTitle(titles[index].id);
+    titles[index] = TitleList(item);
     update(["$index"]); // 現在のタイルの再表示
   }
 

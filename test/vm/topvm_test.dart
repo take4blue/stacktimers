@@ -9,6 +9,20 @@ import 'package:stacktimers/vm/topvm.dart';
 import '../mockviewcontrol.dart';
 import '../testutil.dart';
 
+class _View extends MockViewControl {
+  @override
+  Future<void> toEdit(int titleid) async {
+    func = "toEdit $titleid";
+    final title = await DbAccess.a.getTitle(titleid);
+    title.sTitle = "haha";
+    await DbAccess.a.updateTitle(title);
+    final times = await DbAccess.a.getTimes(titleid);
+    times.add(
+        TimeTable.fromTitleTable(title: title, iTime: 10, iNo: times.length));
+    await DbAccess.a.updateTimes(times, <int>[]);
+  }
+}
+
 Future<void> dbsetup(DbAccess db) async {
   for (int i = 0; i < 5; i++) {
     final title = TitleTable(sTitle: "Hoge ${i + 1}");
@@ -86,7 +100,8 @@ void main() {
     expect(top.isNotLoadDb, false);
     expect(view.func, "toControl 2");
   });
-  test("editTimer", () async {
+  test("editTimer1", () async {
+    // toEditを呼び出しているかどうかの確認
     bool updated = false;
     final view = MockViewControl();
     Get.put<ViewControl>(view);
@@ -98,6 +113,23 @@ void main() {
     await top.editTimer(2);
     expect(view.func, "toEdit 3");
     expect(updated, true);
+  });
+  test("editTimer2", () async {
+    // toEdit内でデータが編集されていた場合の処理
+    bool updated = false;
+    final view = _View();
+    Get.put<ViewControl>(view);
+    final top = TopVM();
+    top.addListenerId("1", () {
+      updated = true;
+    });
+    await top.loader();
+    await top.editTimer(1);
+    expect(view.func, "toEdit 2");
+    expect(updated, true);
+    expect(top.titles[1].sTitle, "haha");
+    expect(await top.titles[1].time(), "06:46");
+    expect(top.titles[1].totalTime, 406);
   });
   test("deleteTitle", () async {
     bool updated = false;
