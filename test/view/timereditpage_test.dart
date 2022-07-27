@@ -39,15 +39,6 @@ class _Test1 extends TimerEditVM {
   }
 }
 
-class _Test2 extends TimerEditVM {
-  _Test2(int titleid) : super(titleid);
-
-  @override
-  Future<void> loadDB() async {
-    return Future.error("illegal");
-  }
-}
-
 void main() {
   setUp(() {
     Get.addTranslations(Messages().keys);
@@ -92,21 +83,7 @@ void main() {
       await tester.pumpAndSettle();
       await screenMatchesGolden(tester, 'TimerEditPage_${lang}_2');
     });
-
-    testGoldens('error_$lang', (WidgetTester tester) async {
-      final top = _Test2(1);
-      Get.put<TimerEditVM>(top);
-      final testWidget =
-          GetMaterialApp(locale: locale, theme: theme, home: const Text("X"));
-      await tester.pumpWidgetBuilder(testWidget);
-      Get.to(
-        () => const TimerEditPage(),
-      );
-      await tester.pumpAndSettle();
-      await screenMatchesGolden(tester, 'TimerEditPage_${lang}_error');
-    });
   }
-
   testWidgets('updateDb', (WidgetTester tester) async {
     // updateの呼び出しでListItemの内容が更新されているかどうかの確認
     final top = _Test1(1);

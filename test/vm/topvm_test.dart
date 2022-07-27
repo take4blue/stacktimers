@@ -80,7 +80,6 @@ void main() {
     await top.loader();
     await top.addTitle();
     expect(top.titles.length, 6);
-    expect(top.isNotLoadDb, true);
     expect(view.func, "toEdit 6");
     final title = await db.getTitle(6);
     expect(title.sTitle.isEmpty, true);
@@ -141,7 +140,6 @@ void main() {
     });
     await top.loader();
     await top.deleteTitle(2);
-    expect(top.isNotLoadDb, true);
     expect(updated, true);
     final title =
         await db.db.query(DbAccess.titleTable, where: 'id = ?', whereArgs: [3]);

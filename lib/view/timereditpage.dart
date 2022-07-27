@@ -7,90 +7,75 @@ import 'package:stacktimers/vm/timereditvm.dart';
 class TimerEditPage extends StatelessWidget {
   const TimerEditPage({Key? key}) : super(key: key);
 
-  // データが存在しているかどうかの判定処理
-  bool _hasData(AsyncSnapshot<void> snap) {
-    return snap.connectionState == ConnectionState.done && !snap.hasError;
-  }
-
   @override
   Widget build(BuildContext context) {
     return GetBuilder<TimerEditVM>(
       id: "all", // TopPageを更新鍵
-      builder: (vm) => FutureBuilder(
-        future: vm.loader(),
-        builder: (BuildContext context, AsyncSnapshot<void> snap) {
-          vm.controller.text = vm.title;
-          return WillPopScope(
-            onWillPop: vm.updateDb,
-            child: Scaffold(
-              appBar: AppBar(
-                title: Text(vm.title),
-                actions: [
-                  IconButton(
-                      onPressed: vm.addTimer, icon: const Icon(Icons.more_time))
-                ],
-              ),
-              body: Column(children: [
-                const SizedBox(
-                  height: 10,
-                ),
-                TextField(
-                  controller: vm.controller,
-                  decoration: InputDecoration(
-                    labelText: "t1TextTitle".tr,
-                    border: const OutlineInputBorder(),
-                  ),
-                  onChanged: vm.changeTitle,
-                ),
-                const Divider(),
-                GetBuilder<TimerEditVM>(
-                    id: "total", // トータル更新鍵
-                    builder: (vm) {
-                      return ListTile(
-                        title: Text(vm.total),
-                      );
-                    }),
-                const Divider(),
-                Expanded(
-                  child: _hasData(snap)
-                      ? SlidableAutoCloseBehavior(
-                          child: ReorderableListView.builder(
-                            buildDefaultDragHandles: false,
-                            itemCount: vm.times.length,
-                            itemBuilder: (context, index) => TimerListItem(
-                              index,
-                              key: Key("$index"),
-                            ),
-                            onReorder: vm.reorder,
-                          ),
-                        )
-                      : snap.hasError
-                          ? Center(
-                              child: Text(
-                              "commonLabelErrorRead".tr,
-                              style: Theme.of(context).textTheme.headline4,
-                            ))
-                          : Center(
-                              child: Column(children: [
-                                const SizedBox(
-                                  width: 60,
-                                  height: 60,
-                                  child: CircularProgressIndicator(),
-                                ),
-                                Text(
-                                  "commonLabelNowLoading".tr,
-                                  style: Theme.of(context).textTheme.headline4,
-                                )
-                              ]),
-                            ),
-                ),
-              ]),
+      builder: (vm) {
+        vm.loader();
+        vm.controller.text = vm.title;
+        return WillPopScope(
+          onWillPop: vm.updateDb,
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(vm.title),
+              actions: [
+                IconButton(
+                    onPressed: vm.addTimer, icon: const Icon(Icons.more_time))
+              ],
             ),
-          );
-        },
-      ),
+            body: Column(children: [
+              const SizedBox(
+                height: 10,
+              ),
+              TextField(
+                controller: vm.controller,
+                decoration: InputDecoration(
+                  labelText: "t1TextTitle".tr,
+                  border: const OutlineInputBorder(),
+                ),
+                onChanged: vm.changeTitle,
+              ),
+              const Divider(),
+              GetBuilder<TimerEditVM>(
+                  id: "total", // トータル更新鍵
+                  builder: (vm) {
+                    return ListTile(
+                      title: Text(vm.total),
+                    );
+                  }),
+              const Divider(),
+              const Expanded(
+                child: TimerList(),
+              ),
+            ]),
+          ),
+        );
+      },
     );
   }
+}
+
+/// List部分
+class TimerList extends StatelessWidget {
+  const TimerList({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) => GetBuilder<TimerEditVM>(
+      id: "list",
+      builder: (vm) {
+        return SlidableAutoCloseBehavior(
+          child: ReorderableListView.builder(
+            buildDefaultDragHandles: false,
+            itemCount: vm.times.length,
+            itemBuilder: (context, index) => TimerListItem(
+              index,
+              key: Key("$index"),
+            ),
+            onReorder: vm.reorder,
+          ),
+        );
+      });
 }
 
 /// タイマーの1レコード設定用のウィジェット

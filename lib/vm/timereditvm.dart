@@ -59,7 +59,7 @@ class TimerEditVM extends IDbLoader with Loader {
   /// タイマーを1レコード追加する
   FutureOr<void> addTimer() async {
     times.add(EditItem(TimeTable(titleid: _titleid, iNo: times.length)));
-    update(["all"]);
+    update(["list"]);
   }
 
   /// タイトル名を変更する
@@ -73,7 +73,7 @@ class TimerEditVM extends IDbLoader with Loader {
       removeRecord.add(times[index].timer.id);
     }
     times.removeAt(index);
-    update(["all"]);
+    update(["list"]);
   }
 
   /// 時間の編集
@@ -127,6 +127,8 @@ class TimerEditVM extends IDbLoader with Loader {
     for (final item in timesTbl) {
       times.add(EditItem(item));
     }
+    update(["all"]);
+    update(["list"]);
   }
 
   @override

@@ -37,7 +37,7 @@ class TopVM extends IDbLoader with Loader {
     final addTime = TimeTable.fromTitleTable(title: addTitle);
     await db.updateTime(addTime);
     await ViewControl.a.toEdit(addTitle.id);
-    reset();
+    await loadDB();
     update(["all"]);
   }
 
@@ -58,7 +58,7 @@ class TopVM extends IDbLoader with Loader {
   /// タイトルデータの削除
   FutureOr<void> deleteTitle(int index) async {
     await DbAccess.a.deleteTitle(titles[index].id);
-    reset();
+    await loadDB();
     update(["all"]);
   }
 
@@ -79,5 +79,6 @@ class TopVM extends IDbLoader with Loader {
     for (final item in table) {
       titles.add(TitleList(item));
     }
+    update(["all"]);
   }
 }

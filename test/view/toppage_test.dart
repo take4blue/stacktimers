@@ -26,13 +26,6 @@ class _Test1 extends TopVM {
   }
 }
 
-class _Test2 extends TopVM {
-  @override
-  Future<void> loadDB() async {
-    return Future.error("Illegal");
-  }
-}
-
 class _TT1 extends TitleList {
   _TT1(TitleTable table) : super(table);
 
@@ -70,14 +63,6 @@ void main() {
       await tester.pumpWidgetBuilder(testWidget);
       await screenMatchesGolden(tester, 'TopPage_${lang}_1');
     });
-    testGoldens('error_$lang', (WidgetTester tester) async {
-      final top = _Test2();
-      Get.put<TopVM>(top);
-      final testWidget = GetMaterialApp(
-          locale: locale, theme: theme, home: const Material(child: TopPage()));
-      await tester.pumpWidgetBuilder(testWidget);
-      await screenMatchesGolden(tester, 'TopPage_${lang}_error');
-    });
   }
   testGoldens('update', (WidgetTester tester) async {
     final top = _Test1();
@@ -88,7 +73,7 @@ void main() {
         home: const Material(child: TopPage()));
     await tester.pumpWidgetBuilder(testWidget);
     top.header = "Hoge ";
-    top.reset();
+    await top.loadDB();
     top.update(["all"]);
     await tester.pumpAndSettle();
     await screenMatchesGolden(tester, 'TopPage_2');

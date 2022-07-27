@@ -8,49 +8,33 @@ class TopPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<TopVM>(
-      id: "all", // TopPageを更新するキー
-      builder: (vm) => Scaffold(
-        appBar: AppBar(
-          title: Text("title".tr),
-          actions: [
-            IconButton(
-                onPressed: vm.addTitle, icon: const Icon(Icons.more_time))
-          ],
-        ),
-        body: FutureBuilder(
-          future: vm.loader(),
-          builder: (BuildContext context, AsyncSnapshot<void> snap) {
-            return snap.connectionState == ConnectionState.done &&
-                    !snap.hasError
-                ? SlidableAutoCloseBehavior(
-                    child: ListView.builder(
-                        itemCount: vm.titles.length,
-                        itemBuilder: (context, index) => TitleListItem(index)),
-                  )
-                : snap.hasError
-                    ? Center(
-                        child: Text(
-                        "commonLabelErrorRead".tr,
-                        style: Theme.of(context).textTheme.headline4,
-                      ))
-                    : Center(
-                        child: Column(children: [
-                          const SizedBox(
-                            width: 60,
-                            height: 60,
-                            child: CircularProgressIndicator(),
-                          ),
-                          Text(
-                            "commonLabelNowLoading".tr,
-                            style: Theme.of(context).textTheme.headline4,
-                          )
-                        ]),
-                      );
-          },
-        ),
+    final vm = Get.find<TopVM>();
+    vm.loader();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("title".tr),
+        actions: [
+          IconButton(onPressed: vm.addTitle, icon: const Icon(Icons.more_time))
+        ],
       ),
+      body: const TitleLists(),
     );
+  }
+}
+
+/// タイトルのリスト一覧
+class TitleLists extends StatelessWidget {
+  const TitleLists({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GetBuilder<TopVM>(
+        id: "all", // TopPageを更新するキー
+        builder: (vm) => SlidableAutoCloseBehavior(
+              child: ListView.builder(
+                  itemCount: vm.titles.length,
+                  itemBuilder: (context, index) => TitleListItem(index)),
+            ));
   }
 }
 
