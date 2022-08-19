@@ -30,10 +30,19 @@ class TimerControlPage extends StatelessWidget {
                       child: GestureDetector(
                         key: const Key("tap"), // テスト用
                         onTap: vm.toggleRunnning,
-                        child: CustomPaint(
-                          painter: TimerOutPainter(),
-                          foregroundPainter: TimerInPainter(repaint: vm),
-                        ),
+                        child: Stack(children: [
+                          CustomPaint(
+                            size: Size.square(size),
+                            painter: TimerOutPainter(),
+                            isComplex: true,
+                          ),
+                          RepaintBoundary(
+                            child: CustomPaint(
+                              size: Size.square(size),
+                              painter: TimerInPainter(repaint: vm),
+                            ),
+                          ),
+                        ]),
                       ),
                     ),
                     const Divider(),

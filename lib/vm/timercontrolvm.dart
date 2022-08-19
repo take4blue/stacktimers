@@ -120,10 +120,16 @@ class TimerControlVM extends IDbLoader with Loader {
   /// 現在時刻更新
   set currentTime(int value) {
     _currentTime = value;
-    lapRemain = TimeTable.formatter(times[_index].endTime.remain(_currentTime));
-    totalRemain = TimeTable.formatter(totalTime.remain(_currentTime));
-    update(["time"]);
-    update();
+    final wLap =
+        TimeTable.formatter(times[_index].endTime.remain(_currentTime));
+    final wTotal = TimeTable.formatter(totalTime.remain(_currentTime));
+    if (lapRemain != wLap || totalRemain != wTotal) {
+      // 表示データが更新された場合に残時間ウィジェットの更新をする
+      lapRemain = wLap;
+      totalRemain = wTotal;
+      update(["time"]);
+    }
+    update(); // TimerInPainter用の更新指示
   }
 
   /// 区間残時間

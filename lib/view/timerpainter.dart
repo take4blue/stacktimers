@@ -41,6 +41,8 @@ class TimerOutPainter extends CustomPainter {
     if (vm.times.length > 1) {
       double angle = (pi * 2) / vm.totalTime;
 
+      Path strokePath = Path();
+
       /// 開始角度
       double start = 0.0;
       for (final time in vm.times) {
@@ -51,11 +53,11 @@ class TimerOutPainter extends CustomPainter {
         path.arcTo(innterRect, (start + delta) - (pi / 2), -delta, false);
         path.arcTo(outerRect, (start) - (pi / 2), (delta / 2), false);
         path.close();
+        strokePath.addPath(path, Offset.zero);
         canvas.drawPath(path, fillPainter(time));
-        canvas.drawPath(path, strokePainter);
-
         start += delta;
       }
+      canvas.drawPath(strokePath, strokePainter);
     } else if (vm.times.length == 1) {
       canvas.drawArc(outerRect, 0, pi * 2, false, fillPainter(vm.times[0]));
       canvas.drawArc(outerRect, 0, pi * 2, false, strokePainter);
@@ -113,6 +115,7 @@ class TimerInPainter extends CustomPainter {
     double start = 0.0;
     int remainTime = min(prevTime, vm.totalTime);
     if (vm.times.length > 1 || vm.currentTime != vm.totalTime) {
+      Path strokePath = Path();
       for (final time in vm.times) {
         final delta = min(time.iTime, remainTime) * angle;
 
@@ -122,8 +125,8 @@ class TimerInPainter extends CustomPainter {
         path.arcTo(rect, start - (pi / 2), delta, false);
         path.lineTo(center.dx, center.dy);
         path.close();
+        strokePath.addPath(path, Offset.zero);
         canvas.drawPath(path, TimerOutPainter.fillPainter(time));
-        canvas.drawPath(path, strokePainter);
 
         start += delta;
         remainTime -= time.iTime;
@@ -132,6 +135,7 @@ class TimerInPainter extends CustomPainter {
           break;
         }
       }
+      canvas.drawPath(strokePath, strokePainter);
     } else if (vm.times.length == 1) {
       canvas.drawArc(
           rect, 0, 2 * pi, false, TimerOutPainter.fillPainter(vm.times[0]));
