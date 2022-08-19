@@ -116,7 +116,7 @@ void main() {
     await top.closePage();
   });
 
-  test("start", () async {
+  test("start1", () async {
     // currentTimeが更新されているかどうかで判断する
     bool updated2 = false;
     final top = TimerControlVM(3);
@@ -131,6 +131,22 @@ void main() {
     await Future.delayed(const Duration(milliseconds: 2500));
     expect(updated2, true); // アイコン領域の更新指示可否
     expect(top.currentTime ~/ _kScale, work + 2); // 時間単位が秒を基準としていたのでそれに合わせてある
+    await top.closePage();
+  });
+
+  test("start2", () async {
+    // 良い定時間経過後ポーズして、その後startした時に、ポーズした
+    // 時間から計測を開始するか
+    // またポーズ後一定時間経過させ再スタート時に、時間が経過していないことを確認
+    final top = TimerControlVM(3);
+    await top.loader();
+    await Future.delayed(const Duration(milliseconds: 2500));
+    await top.pause();
+    await Future.delayed(const Duration(milliseconds: 2000));
+    final work = top.currentTime ~/ _kScale;
+    await top.start();
+    await Future.delayed(const Duration(milliseconds: 200));
+    expect(top.currentTime ~/ _kScale, work); // 時間単位が秒を基準としていたのでそれに合わせてある
     await top.closePage();
   });
 

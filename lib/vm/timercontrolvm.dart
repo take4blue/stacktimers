@@ -220,8 +220,8 @@ class TimerControlVM extends IDbLoader with Loader {
 
   /// タイマー一時停止
   FutureOr<void> pause({bool stopSound = true}) async {
-    _isRunning = false;
     offsetTime = elapsed;
+    _isRunning = false;
     _pref.remove(_kKeyStartTime);
     if (stopSound) {
       ViewControl.a.playNotification(false, 1); // 発音停止
