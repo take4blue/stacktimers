@@ -73,7 +73,7 @@ class TimerEditVM extends IDbLoader with Loader {
       removeRecord.add(times[index].timer.id);
     }
     times.removeAt(index);
-    update(["list"]);
+    update(["list", "total"]);
   }
 
   /// 時間の編集

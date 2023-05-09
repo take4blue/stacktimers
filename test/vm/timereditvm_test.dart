@@ -61,15 +61,21 @@ void main() {
   });
 
   test("addTimer", () async {
-    bool updated = false;
+    int counter = 0;
     final view = MockViewControl();
     Get.put<ViewControl>(view);
     final top = TimerEditVM(3);
     top.addListenerId("all", () {
-      updated = true;
+      counter++;
     });
-    await top.loader();
-    await top.addTimer();
+    top.addListenerId("list", () {
+      counter++;
+    });
+    top.addListenerId("total", () {
+      counter++;
+    });
+    await top.loader(); // all, list
+    await top.addTimer(); // list
     expect(top.times.length, 4);
     expect(top.times[3].timer.id, -1);
     expect(top.times[3].timer.titleid, 3);
@@ -77,7 +83,7 @@ void main() {
     expect(top.times[3].timer.iNo, 3);
     expect(top.times[3].timer.iTime, 0);
     expect(top.isNotLoadDb, false);
-    expect(updated, true);
+    expect(counter, 3);
   });
   test("changeTitle", () async {
     final top = TimerEditVM(2);
@@ -86,20 +92,26 @@ void main() {
     expect(top.title, "hoge");
   });
   test("deleteTime", () async {
-    bool updated = false;
+    int counter = 0;
     final top = TimerEditVM(2);
     top.addListenerId("all", () {
-      updated = true;
+      counter++;
     });
-    await top.loader();
+    top.addListenerId("list", () {
+      counter++;
+    });
+    top.addListenerId("total", () {
+      counter++;
+    });
+    await top.loader(); // all, list
     final removeId = top.times[1].timer.id;
-    await top.deleteTime(1);
+    await top.deleteTime(1); // list, total
     expect(top.times.length, 2);
     expect(top.times[0].timer.iNo, 0);
     expect(top.times[1].timer.iNo, 2);
     expect(top.removeRecord.length, 1);
     expect(top.removeRecord[0], removeId);
-    expect(updated, true);
+    expect(counter, 4);
   });
   test("editTime", () async {
     bool updated1 = false;
