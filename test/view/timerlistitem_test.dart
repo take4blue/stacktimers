@@ -5,6 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stacktimers/l10n/message.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/view/timereditpage.dart';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stacktimers/model/dbaccess.dart';
 import 'package:stacktimers/model/timetable.dart';
 import 'package:stacktimers/model/titletable.dart';
@@ -38,10 +39,12 @@ Future<void> dbsetup(DbAccess db) async {
 
 void main() {
   int counter = 80;
+  TestWidgetsFlutterBinding.ensureInitialized();
 
   late DbAccess db;
   late MockViewControl view;
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     final dbName = "test${counter++}.db";
     await removeDbFile(dbName);
     db = await DbAccess.create(dbName);
