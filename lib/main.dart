@@ -17,6 +17,8 @@ void main() async {
   final db = await DbAccess.create("appdata.db");
   final view = ViewControl();
   runApp(GetMaterialApp(
+    theme: ThemeData.light(),
+    darkTheme: ThemeData.dark(),
     translations: Messages(),
     locale: Get.deviceLocale,
     fallbackLocale: const Locale('en', 'US'),
